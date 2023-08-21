@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+CMD=rox/main.sh
+CMD_LEGACY=docker/run.sh
+CWD="$(pwd)"
+
+while [ ! -f "$CMD" -a ! -f "$CMD_LEGACY" ]
+do
+  cd ..
+  [ "$(pwd)" = "/" ] && {
+    echo "'$CMD' (or legacy '$CMD_LEGACY') not found" 1>&2
+    exit 1
+  }
+done
+
+[ ! -f "$CMD" ] && CMD="$CMD_LEGACY"
+
+CMD="$(pwd)/$CMD"
+cd "$CWD"
+bash "$CMD" "$@"

@@ -1,0 +1,132 @@
+#
+#  Completion for rox:
+#
+#  install <component>       Install component (Ex. 'install magento')
+#  configure <component>     Configure component (Ex. 'configure magento')
+#  laravel                   Run Laravel Artisan CLI command in app container
+#  composer                  Run composer command in app container
+#  shell <container> <user>  Run bash in given container
+#  db                        Open MySQL CLI
+#    db dump                 Output MySQL dump
+#    db admin                Run mysqladmin command
+#    db nuke                 Drop and re-create empty database
+#  cache                     Open Redis CLI
+#    cache fpc               Open Page Cache Redis CLI
+#    cache session           Open Session Redis CLI
+#  httpd                     Run apachectl command
+#  xdebug {on|off}           Enable/disable xdebug
+#  opcache {on|off}          Enable/disable opcache
+#  npm                       Run npm command
+#  grunt                     Run Grunt command
+#  proxy                     Run varnishadm command
+#    proxy log               Open varnishlog
+#  purge                     Clean all cache layers for a neutral platform
+#    laravel                 Clean all cache layers for Laravel
+#  container                 Container commands
+#    ip {app/web/cache/db}   Get IP for a container
+#    url                     Set web server URL in app HOSTS file
+#  data-sync                 Synchronize with remote data
+#    data-sync db            Download and import a remote database
+#    data-sync media         Download remote media files
+#  unit <path> <options>     Run PHPUnit tests
+#  analyse                   Analyse the PHP code with PHPStan
+#
+
+_rox()
+{
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    prevprev="${COMP_WORDS[COMP_CWORD-2]}"
+    opts="install configure magento laravel composer shell db cache httpd sync xdebug opcache npm grunt proxy purge container data-sync unit"
+
+    case "${prev}" in
+        install)
+	        COMPREPLY=( $(compgen -f ${cur}) )
+            return 0
+            ;;
+        configure)
+	        COMPREPLY=( $(compgen -f ${cur}) )
+            return 0
+            ;;
+        magento)
+	        COMPREPLY=( $(compgen -f ${cur}) )
+            return 0
+            ;;
+        laravel)
+	        COMPREPLY=( $(compgen -f ${cur}) )
+            return 0
+            ;;
+        composer)
+	        COMPREPLY=( $(compgen -f ${cur}) )
+            return 0
+            ;;
+        shell)
+	        COMPREPLY=( $(compgen -f ${cur}) )
+            return 0
+            ;;
+        db)
+	        COMPREPLY=( $(compgen -f ${cur}) )
+            return 0
+            ;;
+        cache)
+	        COMPREPLY=( $(compgen -f ${cur}) )
+            return 0
+            ;;
+        httpd)
+	        COMPREPLY=( $(compgen -f ${cur}) )
+            return 0
+            ;;
+        xdebug)
+            local opts="on off"
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            return 0
+            ;;
+        opcache)
+            local opts="on off"
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            return 0
+            ;;
+        npm)
+	        COMPREPLY=( $(compgen -f ${cur}) )
+            return 0
+            ;;
+        grunt)
+	        COMPREPLY=( $(compgen -f ${cur}) )
+            return 0
+            ;;
+        proxy)
+	        COMPREPLY=( $(compgen -f ${cur}) )
+            return 0
+            ;;
+        purge)
+            local opts="magento laravel"
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            return 0
+            ;;
+        container)
+            local opts="ip url"
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            return 0
+            ;;
+        data-sync)
+            local opts="db media"
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            return 0
+            ;;
+        unit)
+	        COMPREPLY=( $(compgen -f ${cur}) )
+            return 0
+            ;;
+        analyse)
+	        COMPREPLY=( $(compgen -f ${cur}) )
+            return 0
+            ;;
+        *)
+        ;;
+    esac
+
+    COMPREPLY=( $(compgen -W "${opts}" ${cur}) )
+}
+complete -F _rox rox

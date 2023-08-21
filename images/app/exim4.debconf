@@ -1,0 +1,2 @@
+exim4-config	exim4/dc_eximconfig_configtype	select	mail sent by smarthost; no local mail
+exim4-config	exim4/dc_smarthost	string	mailserver::1025

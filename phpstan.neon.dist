@@ -1,0 +1,13 @@
+parameters:
+    level: 9
+    paths:
+        - folder
+    bootstrapFiles:
+        - /var/www/public_html/define_folders.php
+    excludePaths:
+        analyse:
+            - folder/plugins/infohub/checksum/doublemetaphone/DoubleMetaphone.php
+    ignoreErrors:
+        -
+            message: '#no value type specified in iterable type array#'
+            path: folder

@@ -1,0 +1,111 @@
+version: '3.8'
+services:
+
+  webserver:
+    container_name: ${PROJECT_NAME}-web
+    build:
+      context: ./images/web
+      args:
+        - HOST_UID=${HOST_UID}
+        - HOST_GID=${HOST_GID}
+    image: ${PROJECT_NAME}-web
+    expose:
+      - "80"
+      - "443"
+    ports:
+      - "${PROJECT_IP}:80:80"
+      - "${PROJECT_IP}:443:443"
+    volumes:
+      - ..:/var/www
+    depends_on:
+      - appserver
+    extra_hosts:
+      - "infohub.local:127.0.0.1"
+      - "demo.infohub.local:127.0.0.1"
+      - "doc.infohub.local:127.0.0.1"
+      - "private.infohub.local:127.0.0.1"
+      - "random.infohub.local:127.0.0.1"
+
+  appserver:
+    container_name: ${PROJECT_NAME}-app
+    build:
+      context: ./images/app
+      args:
+        - HOST_UID=${HOST_UID}
+        - HOST_GID=${HOST_GID}
+        - PHP_VERSION=${PHP_VERSION}
+    image: ${PROJECT_NAME}-app
+    environment:
+      - XDEBUG_CONFIG
+      - PHP_IDE_CONFIG
+    expose:
+      - "9000" # fpm
+      - "9003" # fpm
+      - "35729" # livereload
+    ports:
+      - "${PROJECT_IP}:35729:35729" # livereload
+    volumes:
+      - ..:/var/www
+    depends_on:
+      - dbserver
+#      - cacheserver
+    extra_hosts:
+      - "pi.infohub.se:192.168.1.68"
+
+  dbserver:
+    container_name: ${PROJECT_NAME}-db
+    image: library/mariadb:latest
+    environment:
+      - MYSQL_ROOT_PASSWORD=${ROX_DB_PASS}
+      - MYSQL_DATABASE=${ROX_DB_NAME}
+    expose:
+      - "3306"
+    ports:
+      - "${PROJECT_IP}:3306:3306"
+    volumes:
+      - /var/lib/mysql
+
+  cacheserver:
+    container_name: ${PROJECT_NAME}-cache
+    image: library/redis:latest
+    expose:
+      - "6379"
+    ports:
+      - "${PROJECT_IP}:6379:6379"
+
+#  mailserver:
+#    container_name: ${PROJECT_NAME}-mail
+#    image: schickling/mailcatcher
+#    expose:
+#      - "1025"
+#      - "1080"
+#    ports:
+#      - "${PROJECT_IP}:1080:1080"
+
+#  phpdoc:
+#    container_name: ${PROJECT_NAME}-phpdoc
+#    image: phpdoc/phpdoc
+
+  # https://hub.docker.com/_/mongo
+  mongo:
+    container_name: ${PROJECT_NAME}-mongo
+    image: mongo
+    restart: always
+    expose:
+      - "27017"
+    ports:
+      - "${PROJECT_IP}:27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: infohub
+
+  # https://hub.docker.com/r/libretranslate/libretranslate
+  # http://0.0.0.0:5050/
+  translate:
+    container_name: ${PROJECT_NAME}-translate
+    image: libretranslate/libretranslate
+    restart: always
+    expose:
+      - "5050"
+    ports:
+      - "${PROJECT_IP}:5050:5000"
