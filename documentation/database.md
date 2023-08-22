@@ -54,8 +54,8 @@ You can also use [MySQL workbench](https://dev.mysql.com/downloads/workbench/) i
 You could get super slow database connections from the docker box if you have an external database on a server somewhere.
 To prevent that check that project.conf has your database IP.
 ```
-export DB_URL="infohub.local"
-export DB_IP="10.0.1.162"
+export DB_URL="dev.local"
+export DB_IP="192.168.0.100"
 ```
 
 When you run `rox start` the docker app hosts file will be updated.

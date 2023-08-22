@@ -1,6 +1,6 @@
 FROM ubuntu:22.04
 
-MAINTAINER Peter Lembke <info@infohub.se>
+MAINTAINER Peter Lembke <rox@charzam.com>
 
 ARG HOST_UID=1000
 ARG HOST_GID=1000

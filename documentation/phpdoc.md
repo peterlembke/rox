@@ -13,7 +13,7 @@ The generated files will be saved in folder: public/phpdoc
 Now open the index.html file like this
 
 ``` 
-http://infohub.local/phpdoc/index.html
+http://dev.local/phpdoc/index.html
 ```
 
 Do not commit the documentation. Just use it locally.
@@ -85,7 +85,7 @@ Menu “Help” → “Edit custom VM options…”
 I added this to the end:
   
 ``` 
--Duser.name=Peter Lembke <peter@infohub.se>
+-Duser.name=Peter Lembke <info@charzam.com>
 ```  
 
 Restart PHP Storm just in case. Now when you create a new PHP Class you get your name.
