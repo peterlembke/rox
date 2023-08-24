@@ -85,7 +85,7 @@ Menu “Help” → “Edit custom VM options…”
 I added this to the end:
   
 ``` 
--Duser.name=Peter Lembke <info@charzam.com>
+-Duser.name=Peter Lembke <rox@charzam.com>
 ```  
 
 Restart PHP Storm just in case. Now when you create a new PHP Class you get your name.
