@@ -43,7 +43,7 @@ sudo nano /etc/hosts
 ```
 and add this to the file
 ```
-127.0.0.1   local.infohub.se
+127.0.0.1   dev.local
 127.0.0.1   cacheserver
 127.0.0.1   dbserver
 127.0.0.1   proxyserver
@@ -52,7 +52,7 @@ and add this to the file
 127.0.0.1   pgsql
 127.0.0.1   translate
 127.0.0.1   mongo
-10.0.1.162  infohub.local
+127.0.0.1  infohub.local
 ```
 
 ## Clone rox to your project
@@ -85,8 +85,8 @@ Review the settings and update them if needed.
 You could get super slow database connections from the docker box.
 To prevent that check that project.conf has your database ip
 ```
-export DB_URL="infohub.local"
-export DB_IP="10.0.1.162"
+export DB_URL="dev.local"
+export DB_IP="192.168.0.100"
 ```
 Read more about [database](documentation/database.md)
 
