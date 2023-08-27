@@ -4,15 +4,16 @@ If you want to reinstall the docker environment then you can follow these instru
 If you want to install for the first time then **do not** follow these instructions
 
 # Delete boxes
-The below commands delete all docker boxes. Not just the ones for this project.
+The below commands delete all docker images and containers. Not just the ones for this project.
 
 If you know a command that take only the boxes for this project then please update the documentation.
 
 ```
 docker stop $(docker ps -q)
-docker ps
-docker container prune
+docker image ls -a
 docker image prune -a
+docker container ls -a
+docker container prune -a
 ```
 
 # Rename the old installation
