@@ -119,14 +119,26 @@ The PROJECT_NAME is used to set a prefix on your docker images.
 This assumes you installed `rox`. If you didn't, all `rox` commands should be replaced
 with `docker/run.sh` and you have to `cd` to the project root directory to run them.
 ```
-rox up # This will take a while the first time
+rox up
 ```
-The first boot will take 20 min or so. And it will never be finished. When nothing has happened for a while, open a new terminal tab and write `rox ps` or `docker ps` to see if any docker boxes are still being starting.
+The first boot will take 10 min or so. And it will never be finished. When nothing has happened for a while, open a new terminal tab and write `rox ps` or `docker ps` to see if any docker boxes are still being starting.
 When all have started. Write `rox start`. That command do some extra things to the boxes on each system start.
 
+## Test that it works
+
+Create folder `public_html`
+
+Create file `index.php`
+Add this content to the file:
+```
+<?php
+echo "Hello"; 
+```
+Now surf to https://localhost/
+
 ## Get Laravel working
-When the docker boxes work then you can get your Laravel project working
-This will be easy if you did not skip any steps like "Create a Github token" or "Let PHP find the database".
+If you want to use Laravel you can do these steps:
+Make sure you did not skip the step "Create a Github token" and "Let PHP find the database".
 
 * Put your .env files in the project root.
 * Run `rox start` to start and enable things needed.
