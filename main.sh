@@ -208,19 +208,6 @@ fpm_cmd()
 }
 
 #############################################
-# Run Varnish command
-varnish_cmd()
-{
-  local cmd='varnishadm'
-  if [ "$1" = 'log' ]
-  then
-    local cmd='varnishlog'
-    shift
-  fi
-  container_exec proxyserver root "$cmd" "$@"
-}
-
-#############################################
 # Run PhpStan command
 # vendor/bin/phpstan analyse folder --level 2
 # rox analyse -c /var/www/phpstan.neon.dist
@@ -317,11 +304,6 @@ update_hosts_file()
 # Clean all known cache layers in an independent setup
 purge_all_independent()
 {
-  notice 'Banning Varnish URLs'; echo -n ' .. '
-  e="$(varnish_cmd 'ban req.url ~ .*')" && success '[DONE]' && echo || {
-    error '[ERROR]'; echo
-    echo "$e"
-  }
   notice 'Flushing Redis Cache'; echo -n ' .. '
   e="$(redis_cmd FLUSHDB)"
   # `redis-cli' returns 0 on error, look for output `OK' instead
@@ -340,11 +322,6 @@ purge_all_independent()
 # Clean all known cache layers for laravel
 purge_all_laravel()
 {
-  notice 'Banning Varnish URLs'; echo -n ' .. '
-  e="$(varnish_cmd 'ban req.url ~ .*')" && success '[DONE]' && echo || {
-    error '[ERROR]'; echo
-    echo "$e"
-  }
   notice 'Flushing Redis Cache'; echo -n ' .. '
   e="$(redis_cmd FLUSHDB)"
   # `redis-cli' returns 0 on error, look for output `OK' instead
@@ -400,7 +377,7 @@ purge_all_laravel()
     error '[ERROR]'; echo
     echo "$e"
   }
-  notice 'Publish all livewire files'; echo -n ' .. '
+  notice 'Publish all LiveWire files'; echo -n ' .. '
   # `laravel_cmd' returns 129 on exit if stdin is a tty, hence `echo |'
   e="$(echo | laravel_cmd livewire:publish 2>&1)" && success '[DONE]' && echo || {
     error '[ERROR]'; echo
