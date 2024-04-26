@@ -45,9 +45,9 @@ rox shell web root
 ```
 Install some good to have command
 ```
-apt-get update
-apt-get install nano
-apt-get install telnet
+apt update
+apt install nano
+apt install telnet
 ```
 and run the telnet command
 ``` 

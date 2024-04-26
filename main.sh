@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 DOCKER_BIN="$(which docker)"
-COMPOSE_BIN="$(which docker-compose)"
+COMPOSE_BIN="$DOCKER_BIN"
 COMPOSE_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 source "$COMPOSE_DIR/default.conf"
@@ -43,7 +43,7 @@ compose_cmd()
   then
     os=mac
   fi
-  "$COMPOSE_BIN" \
+  "$COMPOSE_BIN" compose \
     --file "$COMPOSE_DIR"/docker-compose.yml \
     --file "$COMPOSE_DIR"/docker-compose."$os".yml \
     --project-name "$COMPOSE_PROJECT_NAME" \

@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 MAINTAINER Peter Lembke <rox@charzam.com>
 
@@ -13,10 +13,10 @@ ENV APACHE_GROUP dockerhost
 ENV TZ=Europe/Stockholm
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-RUN apt-get update && apt-get install -y \
+RUN apt update && apt install -y \
   apt-utils \
   apache2 \
-  && apt-get clean \
+  && apt clean \
   && rm -rf /var/lib/apt/lists/*
 
 RUN a2enmod rewrite

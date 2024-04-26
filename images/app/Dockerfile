@@ -1,10 +1,10 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 MAINTAINER Peter Lembke <rox@charzam.com>
 
 ARG HOST_UID=1000
 ARG HOST_GID=1000
-ARG PHP_VERSION=8.1
+ARG PHP_VERSION=8.3
 ARG DEBIAN_FRONTEND=noninteractive
 
 ENV HOST_UID $HOST_UID
@@ -17,7 +17,7 @@ ENV GITHUB_TOKEN ghp_something
 ENV TZ=Europe/Stockholm
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-RUN apt-get update && apt-get install -y \
+RUN apt update && apt install -y \
   apt-utils \
   apt-transport-https \
   cron \
@@ -30,7 +30,7 @@ RUN apt-get update && apt-get install -y \
   unzip \
   iputils-ping
 
-RUN apt-get update && apt-get install -y \
+RUN apt update && apt install -y \
   php${PHP_VERSION}-apcu \
   php${PHP_VERSION}-cli \
   php${PHP_VERSION}-curl \
@@ -60,8 +60,8 @@ RUN mkdir -p /run/php && touch "/run/php/php${PHP_VERSION}-fpm.sock"
 # PECL
 RUN mkdir -p /tmp/pear/cache
 RUN pecl channel-update pecl.php.net
-RUN apt-get install -y libgpgme11-dev
-RUN apt-get install -y php-pear
+RUN apt install -y libgpgme11-dev
+RUN apt install -y php-pear
 
 # MongoDb
 COPY mongodb.ini "/etc/php/${PHP_VERSION}/mods-available/mongodb.ini"
@@ -86,7 +86,7 @@ RUN debconf-set-selections /tmp/exim4.debconf
 RUN dpkg-reconfigure -f noninteractive exim4-config
 
 # Clean up
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN apt clean && rm -rf /var/lib/apt/lists/*
 
 COPY entrypoint.sh /
 RUN chmod +x /entrypoint.sh
