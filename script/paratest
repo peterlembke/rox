@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+cd /var/www
+php -f /var/www/vendor/bin/paratest -- -c /var/www/phpunit.xml --runner WrapperRunner --processes 8 --display-skipped
+## php -f /var/www/vendor/bin/paratest -- /packages/domain -c /var/www/phpunit.xml --runner WrapperRunner --processes 8 --display-skipped
