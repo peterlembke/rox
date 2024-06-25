@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+PHP_VERSION="8.3"
 DOCKER_BIN="$(which docker)"
 COMPOSE_BIN="$DOCKER_BIN"
 COMPOSE_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -456,7 +457,7 @@ test_unit_paratest()
     # No test subjects given - run full suite
 
     container_exec appserver dockerhost \
-      ./var/www/dox/script/paratest
+      ./var/www/rox/script/paratest
     return
 
     # php -f "$phpunit" -- -c "$config" --runner WrapperRunner --processes 6 "${@:$nsubs+1}"
@@ -609,15 +610,56 @@ elif [ "$1" = 'httpd' ]
 
 #############################################
 # Handle "xdebug" action
-elif [ "$1" = 'xdebug' -o "$1" = 'opcache' -o "$1" = 'gnupg' -o "$1" = 'mongodb' ]
+elif [ "$1" = 'xdebug' -o "$1" = 'gnupg' -o "$1" = 'mongodb' ]
   then
     if [ "$2" = 'off' ]
     then
       notice 'Disabling '"$1"; echo
       container_exec appserver root phpdismod "$1"
-    else
+    elif [ "$2" = 'on' ]
+    then
       notice 'Enabling '"$1"; echo
       container_exec appserver root phpenmod "$1"
+    fi
+    fpm_cmd reload
+
+#############################################
+# Handle "opcache" action
+elif [ "$1" = 'opcache' ]
+  then
+    if [ "$2" = 'off' ]
+    then
+      notice 'Disabling '"$1"; echo
+      container_exec appserver root phpdismod "$1"
+    elif [ "$2" = 'on' ]
+    then
+      notice 'Enabling normal '"$1"; echo
+      container_exec appserver root cp /etc/php/opcache-on.blacklist /etc/php/opcache.blacklist
+      container_exec appserver root phpenmod "$1"
+    elif [ "$2" = 'full' ]
+    then
+      notice 'Enabling full speed '"$1"; echo
+      container_exec appserver root cp /etc/php/opcache-full.blacklist /etc/php/opcache.blacklist
+      container_exec appserver root phpenmod "$1"
+    fi
+    fpm_cmd reload
+
+#############################################
+# Handle "jit" action
+elif [ "$1" = 'jit' ]
+  then
+    if [ "$2" = 'off' ]
+    then
+      notice 'Disabling '"$1"; echo
+      container_exec appserver root phpdismod "opcache"
+      container_exec appserver root cp "/etc/php/$PHP_VERSION/mods-available/opcache-on.ini" "/etc/php/$PHP_VERSION/mods-available/opcache.ini"
+      container_exec appserver root phpenmod "opcache"
+    elif [ "$2" = 'on' ]
+    then
+      notice 'Enabling '"$1"; echo
+      container_exec appserver root phpdismod "opcache"
+      container_exec appserver root cp "/etc/php/$PHP_VERSION/mods-available/opcache-jit.ini" "/etc/php/$PHP_VERSION/mods-available/opcache.ini"
+      container_exec appserver root phpenmod "opcache"
     fi
     fpm_cmd reload
 
@@ -730,7 +772,8 @@ Usage:
     cache session           Open Session Redis CLI
   httpd                     Run apachectl command
   xdebug {on|off}           Enable/disable xdebug
-  opcache {on|off}          Enable/disable opcache
+  jit {on|off}              Enable/disable JIT compiler
+  opcache {on|off|full}     Enable/disable opcache. Full=empty blacklist
   npm                       Run npm command
   grunt                     Run Grunt command
   purge                     Clean all cache layers for a neutral platform
@@ -742,6 +785,7 @@ Usage:
     data-sync db            Download and import a remote database
     data-sync media         Download remote media files
   unit <path> <options>     Run PHPUnit tests
+  unit {laravel|paratest|coverage}  Run PHPUnit tests
   analyse                   Analyse the PHP code with PHPStan
 
 All unrecognized command are passed on to docker-compose:
