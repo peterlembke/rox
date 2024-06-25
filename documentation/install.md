@@ -3,7 +3,7 @@
 Install Docker like this:
 
 ```
-sudo apt-get install docker.io
+sudo apt install docker.io
 ```
 
 The package is called `docker.io` in recent versions of Debian but might be called something else in your distribution.

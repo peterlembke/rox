@@ -1,4 +1,3 @@
-version: '3.8'
 services:
 
   webserver:
@@ -48,7 +47,7 @@ services:
       - ..:/var/www
     depends_on:
       - dbserver
-#      - cacheserver
+      - cacheserver
     extra_hosts:
       - "pi.infohub.se:192.168.1.68"
 
@@ -67,7 +66,8 @@ services:
 
   cacheserver:
     container_name: ${PROJECT_NAME}-cache
-    image: library/redis:latest
+#    image: library/redis:latest
+    image: eqalpha/keydb:latest
     expose:
       - "6379"
     ports:
@@ -89,7 +89,7 @@ services:
   # https://hub.docker.com/_/mongo
   mongo:
     container_name: ${PROJECT_NAME}-mongo
-    image: mongo
+    image: mongo:latest
     restart: always
     expose:
       - "27017"
@@ -103,7 +103,7 @@ services:
   # http://0.0.0.0:5050/
   translate:
     container_name: ${PROJECT_NAME}-translate
-    image: libretranslate/libretranslate
+    image: libretranslate/libretranslate:latest
     restart: always
     expose:
       - "5050"

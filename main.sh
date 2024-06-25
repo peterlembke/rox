@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 DOCKER_BIN="$(which docker)"
-COMPOSE_BIN="$(which docker-compose)"
+COMPOSE_BIN="$DOCKER_BIN"
 COMPOSE_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 source "$COMPOSE_DIR/default.conf"
@@ -43,7 +43,7 @@ compose_cmd()
   then
     os=mac
   fi
-  "$COMPOSE_BIN" \
+  "$COMPOSE_BIN" compose \
     --file "$COMPOSE_DIR"/docker-compose.yml \
     --file "$COMPOSE_DIR"/docker-compose."$os".yml \
     --project-name "$COMPOSE_PROJECT_NAME" \
@@ -167,6 +167,16 @@ set_env()
   notice "cp $ROX_BASE_DIR/$env_name $ROX_BASE_DIR/.env"; echo
   laravel_cmd config:clear
   success '[DONE] '; notice "Using $env_name as .env file"; echo
+}
+
+#############################################
+# Create symlink
+set_symlink()
+{
+  local base_dir="$(cd "$COMPOSE_DIR"/.. && pwd)"
+
+  container_exec appserver root sh -c "ln -s $ROX_BASE_DIR/storage $ROX_BASE_DIR/public/storage"
+  success '[DONE] '; notice "Created symlink from public/storage to storage"; echo
 }
 
 #############################################
@@ -367,9 +377,16 @@ purge_all_laravel()
     error '[ERROR]'; echo
     echo "$e"
   }
+  notice 'Publish all LiveWire files'; echo -n ' .. '
+  # `laravel_cmd' returns 129 on exit if stdin is a tty, hence `echo |'
+  e="$(echo | laravel_cmd livewire:publish 2>&1)" && success '[DONE]' && echo || {
+    error '[ERROR]'; echo
+    echo "$e"
+  }
 }
 
-################################################################################
+#############################################
+
 # Run PHPUnit test in app container
 test_unit_laravel()
 {
@@ -410,6 +427,104 @@ test_unit_laravel()
     local guestpath="$ROX_BASE_DIR/${hostpath/$bd\//}"
     container_exec appserver dockerhost \
       php -f "$phpunit" -- -c "$config" "${@:$nsubs+1}" "$guestpath"
+  done
+}
+
+#############################################
+
+# Run PHPUnit test in app container
+test_unit_paratest()
+{
+  local subjects
+  local nsubs=0
+  local bd="$(cd "$COMPOSE_DIR"/.. && pwd)"
+  local cwd="$(pwd)"
+  local phpunit="$ROX_BASE_DIR"'/vendor/bin/paratest'
+  local config='phpunit.xml'
+  # [ -f "$bd/$config" ] || config="$config"'.dist'
+  config="$ROX_BASE_DIR"'/'"$config"
+
+  # Find number of arguments until first option (if any)
+  for arg in "$@"
+  do
+    [[ "$arg" = -* ]] && break
+    let ++nsubs
+  done
+
+  if [ $nsubs -eq 0 ]
+  then
+    # No test subjects given - run full suite
+
+    container_exec appserver dockerhost \
+      ./var/www/dox/script/paratest
+    return
+
+    # php -f "$phpunit" -- -c "$config" --runner WrapperRunner --processes 6 "${@:$nsubs+1}"
+    # php -f "$phpunit" -- -c "$config" --runner WrapperRunner --processes 6 --log-junit /var/www/report.xml "${@:$nsubs+1}"
+    # Copy paste report.xml to https://marmelab.com/phpunit-d3-report/
+
+  fi
+
+  for subject in "${@:1:$nsubs}"
+  do
+    if [ ! -e "$subject" ]
+    then
+      error "Cannot access '$subject': No such file or directory"; echo 1>&2
+      continue
+    fi
+
+    notice 'Testing '; success "$subject"; echo ' ..'
+    local hostpath="$cwd/$subject"
+    local guestpath="$ROX_BASE_DIR/${hostpath/$bd\//}"
+    container_exec appserver dockerhost \
+      php -f "$phpunit" -- -c "$config" "${@:$nsubs+1}" "$guestpath"
+  done
+}
+
+#############################################
+
+# Run PHPUnit test in app container
+# https://stackoverflow.com/questions/11829931/setting-xdebug-coverage-enable-on-on-command-line-for-phpunit
+# Observe that xdebug must be enabled for the code coverage to work.
+test_unit_coverage()
+{
+  local subjects
+  local nsubs=0
+  local bd="$(cd "$COMPOSE_DIR"/.. && pwd)"
+  local cwd="$(pwd)"
+  local phpunit="$ROX_BASE_DIR"'/vendor/phpunit/phpunit/phpunit'
+  local config='phpunit.xml'
+  # [ -f "$bd/$config" ] || config="$config"'.dist'
+  config="$ROX_BASE_DIR"'/'"$config"
+
+  # Find number of arguments until first option (if any)
+  for arg in "$@"
+  do
+    [[ "$arg" = -* ]] && break
+    let ++nsubs
+  done
+
+  if [ $nsubs -eq 0 ]
+  then
+    # No test subjects given - run full suite
+    container_exec appserver dockerhost \
+      php -dxdebug.mode=coverage -f "$phpunit" -- -c "$config" --coverage-html /var/www/public/reports/ "${@:$nsubs+1}"
+    return
+  fi
+
+  for subject in "${@:1:$nsubs}"
+  do
+    if [ ! -e "$subject" ]
+    then
+      error "Cannot access '$subject': No such file or directory"; echo 1>&2
+      continue
+    fi
+
+    notice 'Testing '; success "$subject"; echo ' ..'
+    local hostpath="$cwd/$subject"
+    local guestpath="$ROX_BASE_DIR/${hostpath/$bd\//}"
+    container_exec appserver dockerhost \
+      php -dxdebug.mode=coverage -f "$phpunit" -- -c "$config" --coverage-html /var/www/public/reports/ "${@:$nsubs+1}" "$guestpath"
   done
 }
 
@@ -568,10 +683,20 @@ elif [ "$1" = 'unit' ]
         shift
         shift
         test_unit_laravel "$@"
-    else
-        ## fall back to original behaviour
+    elif [ "$2" = 'paratest' ]
+    then
         shift
-        test_unit_laravel "$@"
+        shift
+        # Turn off xdebug. We want speed
+        container_exec appserver root phpdismod "xdebug"
+        test_unit_paratest "$@"
+    elif [ "$2" = 'coverage' ]
+    then
+        shift
+        shift
+        # Turn ON xdebug. It is required
+        container_exec appserver root phpenmod "xdebug"
+        test_unit_coverage "$@"
     fi
 #############################################
 # Handle "analyse" action
@@ -640,6 +765,7 @@ else
     container_exec appserver root phpenmod "gnupg"
     notice 'Enabling mongodb'; echo
     container_exec appserver root phpenmod "mongodb"
+    set_symlink
   fi
   if [ "$1" = 'stop' ]
   then

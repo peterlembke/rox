@@ -48,7 +48,7 @@ rox shell proxy
 rox shell search
 rox shell cache
 ```
-In the box you run Linux. If a Linux command is missing you can use `apt-get install` to install what you need.
+In the box you run Linux. If a Linux command is missing you can use `apt install` to install what you need.
 
 ### or with Docker
 
@@ -94,8 +94,8 @@ To rebuild images you must use `docker-compose build` or `docker-compose up --bu
 
 ```
 rox shell app root
-apt-get update
-apt-get install iputils-ping
+apt update
+apt install iputils-ping
 ping private.infohub.local
 ```
 
