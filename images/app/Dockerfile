@@ -50,8 +50,12 @@ RUN wget -qO- https://getcomposer.org/installer \
 COPY fpm.conf "/etc/php/${PHP_VERSION}/fpm/php-fpm.conf"
 COPY www.conf "/etc/php/${PHP_VERSION}/fpm/pool.d/www.conf"
 COPY xdebug.ini "/etc/php/${PHP_VERSION}/mods-available/xdebug.ini"
-COPY opcache.ini "/etc/php/${PHP_VERSION}/mods-available/opcache.ini"
-COPY opcache.blacklist /etc/php/opcache.blacklist
+COPY opcache-on.ini "/etc/php/${PHP_VERSION}/mods-available/opcache.ini"
+COPY opcache-on.ini "/etc/php/${PHP_VERSION}/mods-available/opcache-on.ini"
+COPY opcache-jit.ini "/etc/php/${PHP_VERSION}/mods-available/opcache-jit.ini"
+COPY opcache-on.blacklist /etc/php/opcache.blacklist
+COPY opcache-on.blacklist /etc/php/opcache-on.blacklist
+COPY opcache-full.blacklist /etc/php/opcache-full.blacklist
 COPY common.ini /etc/php/common.ini
 RUN ln -s /etc/php/common.ini "/etc/php/${PHP_VERSION}/cli/conf.d/99-common.ini"
 RUN ln -s /etc/php/common.ini "/etc/php/${PHP_VERSION}/fpm/conf.d/99-common.ini"

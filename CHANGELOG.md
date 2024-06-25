@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2024-06-25
+[GitHub](https://github.com/peterlembke/rox/releases/tag/v1.3.0)
+
+Have updated xon to use the below changes for the best xdebug experience.
+Have updated xoff for the best performance.
+
+* rox opcache on - Uses the opcache.blacklist file to exclude files from opcache
+* rox opcache full - Uses an empty opcache.blacklist file to include all files in opcache 
+* rox jit on - To enable JIT in opcache.ini
+* rox jit off - To disable JIT in opcache.ini
+* Changes in main.sh - cleanup since v1.2.0
+
+## [1.2.0] - 2024-06-25
+[GitHub](https://github.com/peterlembke/rox/releases/tag/v1.2.0)
+
+* Updated Ubuntu 22.04 -> 24.04 (PHP 8.3)
+* Added :latest to all images from docker hub
+* Added support for paratest and code coverage (PHPUnit)
+* Removed Varnish - Have not used it for year
+* Updated PHP 8.1 to PHP 8.3
+* Uses apt instead of apt-get - Because apt is enough for most cases
+* Uses docker compose instead of docker-compose - requirement for new versions of Docker
+
 ## [1.1.1] - 2023-08-22
 [GitHub](https://github.com/peterlembke/rox/releases/tag/v1.1.1)
 
