@@ -17,6 +17,7 @@ Or copy the above Plist file to /Library/LaunchDaemons/com.ralphschindler.docker
 
 Next and every successive reboot will ensure your lo0 will have the proper ip address.
 
+DEPRECATED 2024-07-04 - Not needed any more:
 Finally, make sure to configure your xdebug correctly. However, you get your `xdebug.client_host` into the container, ensure it has similar settings:
 
 ```ini

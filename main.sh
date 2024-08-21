@@ -6,8 +6,15 @@ COMPOSE_BIN="$DOCKER_BIN"
 COMPOSE_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 source "$COMPOSE_DIR/default.conf"
-source "$COMPOSE_DIR/project.conf.dist"
-[ -f "$COMPOSE_DIR/project.conf" ] && source "$COMPOSE_DIR/project.conf"
+
+if [[ "$OSTYPE" == "linux"* ]]
+then
+  source "$COMPOSE_DIR/project.conf.dist.linux"
+  [ -f "$COMPOSE_DIR/project.conf.linux" ] && source "$COMPOSE_DIR/project.conf.linux"
+else
+  source "$COMPOSE_DIR/project.conf.dist.mac"
+  [ -f "$COMPOSE_DIR/project.conf.mac" ] && source "$COMPOSE_DIR/project.conf.mac"
+fi
 
 export COMPOSE_PROJECT_NAME="$PROJECT_NAME"
 export HOST_UID=1000
