@@ -1,3 +1,4 @@
-project.conf
+project.conf.mac
+project.conf.linux
 /.idea
 .DS_Store
