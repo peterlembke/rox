@@ -5,8 +5,24 @@ services:
   translate:
     container_name: ${PROJECT_NAME}-translate
     image: libretranslate/libretranslate:latest
-    restart: always
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    # restart: always
     expose:
       - "5050"
     ports:
       - "${PROJECT_IP}:5050:5000"
+    healthcheck:
+      test: [ 'CMD-SHELL', './venv/bin/python scripts/healthcheck.py' ]
+    environment:
+      #   - LT_API_KEYS=true
+      #   - LT_API_KEYS_DB_PATH=/app/db/api_keys.db # Same result as `db/api_keys.db` or `./db/api_keys.db`
+      ## Uncomment these vars and libretranslate_models volume to optimize loading time.
+      - LT_UPDATE_MODELS=true
+      #   - LT_LOAD_ONLY=en,fr
+      # volumes:
+      #   - libretranslate_api_keys:/app/db
+      # Keep the models in a docker volume, to avoid re-downloading on startup
+      #   - libretranslate_models:/home/libretranslate/.local:rw

@@ -7,24 +7,13 @@ COMPOSE_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 source "$COMPOSE_DIR/default.conf"
 
-if [ -f "$COMPOSE_DIR/project.conf" ]
+if [[ "$OSTYPE" == "linux"* ]]
 then
-<<<<<<< HEAD
-  source "$COMPOSE_DIR/project.conf"
-=======
-  # You get all settings in project.conf.dist.linux + the ones in project.conf.linux
   source "$COMPOSE_DIR/project.conf.dist.linux"
   [ -f "$COMPOSE_DIR/project.conf.linux" ] && source "$COMPOSE_DIR/project.conf.linux"
->>>>>>> 38a655abd2eaaaa2ae7bd002497f78b437de6154
 else
-  if [[ "$OSTYPE" == "linux"* ]]
-  then
-    source "$COMPOSE_DIR/project.conf.dist.linux"
-    [ -f "$COMPOSE_DIR/project.conf.linux" ] && source "$COMPOSE_DIR/project.conf.linux"
-  else
-    source "$COMPOSE_DIR/project.conf.dist.mac"
-    [ -f "$COMPOSE_DIR/project.conf.mac" ] && source "$COMPOSE_DIR/project.conf.mac"
-  fi
+  source "$COMPOSE_DIR/project.conf.dist.mac"
+  [ -f "$COMPOSE_DIR/project.conf.mac" ] && source "$COMPOSE_DIR/project.conf.mac"
 fi
 
 export COMPOSE_PROJECT_NAME="$PROJECT_NAME"
