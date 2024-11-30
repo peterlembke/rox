@@ -9,7 +9,13 @@ source "$COMPOSE_DIR/default.conf"
 
 if [ -f "$COMPOSE_DIR/project.conf" ]
 then
+<<<<<<< HEAD
   source "$COMPOSE_DIR/project.conf"
+=======
+  # You get all settings in project.conf.dist.linux + the ones in project.conf.linux
+  source "$COMPOSE_DIR/project.conf.dist.linux"
+  [ -f "$COMPOSE_DIR/project.conf.linux" ] && source "$COMPOSE_DIR/project.conf.linux"
+>>>>>>> 38a655abd2eaaaa2ae7bd002497f78b437de6154
 else
   if [[ "$OSTYPE" == "linux"* ]]
   then

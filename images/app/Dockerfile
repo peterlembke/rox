@@ -1,6 +1,7 @@
 FROM ubuntu:24.04
 
 MAINTAINER Peter Lembke <rox@charzam.com>
+LABEL org.opencontainers.image.authors="rox@charzam.com"
 
 ARG HOST_UID=1000
 ARG HOST_GID=1000
