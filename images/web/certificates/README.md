@@ -24,12 +24,7 @@ apache2ctl -S
 
 You can see details on the certificates
 ``` 
-openssl s_client -connect infohub.local:443
-openssl s_client -connect demo.infohub.local:443
-openssl s_client -connect doc.infohub.local:443
-openssl s_client -connect private.infohub.local:443
-openssl s_client -connect random.infohub.local:443
-openssl s_client -connect local.infohub.se:443
+openssl s_client -connect dev.local:443
 ```
 
 ### ERR_CONNECTION_REFUSED
@@ -47,7 +42,7 @@ apt-get install telnet
 ```
 and run the telnet command
 ``` 
-telnet infohub.local 443
+telnet dev.local 443
 ```
 It should connect.
 
@@ -57,24 +52,24 @@ See [here](https://stackoverflow.com/questions/63188013/localhost-sent-an-invali
 
 Commands
 ```
-curl -Lkv https://infohub.local
-curl -Lkv http://infohub.local
-nc -v infohub.local 443
+curl -Lkv https://dev.local
+curl -Lkv http://dev.local
+nc -v dev.local 443
 nc -v 127.0.0.1 80 
 ```
 I expect the http and 80 to work. Try this command
 ``` 
-nc -v infohub.local 443
+nc -v dev.local 443
 ```
 If the connection works then SSL works. The next command will show the real error 
 ```
-curl -Lkv https://infohub.local
+curl -Lkv https://dev.local
 ```
 I got this error
 ```
 *   Trying 127.0.0.1:443...
 * TCP_NODELAY set
-* Connected to infohub.local (127.0.0.1) port 443 (#0)
+* Connected to dev.local (127.0.0.1) port 443 (#0)
 * ALPN, offering h2
 * ALPN, offering http/1.1
 * successfully set certificate verify locations:
