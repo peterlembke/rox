@@ -43,6 +43,7 @@ services:
       - "35729" # livereload
     ports:
       - "${PROJECT_IP}:35729:35729" # livereload
+      - "${PROJECT_IP}:1234:1234" # LM Studio
     volumes:
       - ..:/var/www
     depends_on:
