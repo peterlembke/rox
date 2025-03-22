@@ -5,9 +5,6 @@ services:
   translate:
     container_name: ${PROJECT_NAME}-translate
     image: libretranslate/libretranslate:latest
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
     restart: unless-stopped
     # restart: always
     expose:

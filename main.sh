@@ -51,11 +51,13 @@ compose_cmd()
   then
     os=mac
   fi
+
   "$COMPOSE_BIN" compose \
     --file "$COMPOSE_DIR"/docker-compose.yml \
-    --file "$COMPOSE_DIR"/docker-compose."$os".yml \
     --project-name "$COMPOSE_PROJECT_NAME" \
+    --file "$COMPOSE_DIR"/docker-compose."$os".yml \
     "$@"
+
 }
 
 ################################################################################
