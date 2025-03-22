@@ -28,7 +28,9 @@ RUN apt update && apt install -y \
   sudo \
   wget \
   unzip \
-  iputils-ping
+  iputils-ping \
+  nmap \
+  net-tools
 
 RUN apt update && apt install -y \
   php${PHP_VERSION}-apcu \

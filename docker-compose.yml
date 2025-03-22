@@ -41,6 +41,7 @@ services:
       - "9000" # fpm
       - "9003" # fpm
       - "35729" # livereload
+      - "1234" # LM Studio
     ports:
       - "${PROJECT_IP}:35729:35729" # livereload
     volumes:
@@ -49,9 +50,10 @@ services:
       - dbserver
       - cacheserver
     extra_hosts:
-      - "pi.infohub.se:192.168.1.68"
-      - "lmstudio1.local:192.168.0.37"
-      - "lmstudio2.local:172.17.0.1"
+      - "host1.local:172.17.0.1"
+      - "host2.local:172.18.0.1"
+      - "host3.local:172.19.0.1"
+      - "host4.local:172.20.0.1"
 
   dbserver:
     container_name: ${PROJECT_NAME}-db
