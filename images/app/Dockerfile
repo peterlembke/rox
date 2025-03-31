@@ -6,13 +6,14 @@ ARG HOST_UID=1000
 ARG HOST_GID=1000
 ARG PHP_VERSION=8.3
 ARG DEBIAN_FRONTEND=noninteractive
+ARG GITHUB_TOKEN
 
 ENV HOST_UID $HOST_UID
 ENV HOST_GID $HOST_GID
 ENV FPM_USER dockerhost
 ENV FPM_GROUP dockerhost
 ENV PHP_VERSION $PHP_VERSION
-ENV GITHUB_TOKEN ghp_something
+ENV GITHUB_TOKEN $GITHUB_TOKEN
 
 ENV TZ=Europe/Stockholm
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone

@@ -11,3 +11,6 @@ export PHP_IDE_CONFIG="serverName=dev.local"
 export HOST_URL="dev.local"
 export DB_URL="dev.local"
 export DB_IP="127.0.0.1"
+
+# Here you set your Github token if you want to download php packages from github
+export GITHUB_TOKEN=""

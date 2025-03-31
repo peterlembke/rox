@@ -33,6 +33,7 @@ services:
         - HOST_UID=${HOST_UID}
         - HOST_GID=${HOST_GID}
         - PHP_VERSION=${PHP_VERSION}
+        - GITHUB_TOKEN=${GITHUB_TOKEN}
     image: ${PROJECT_NAME}-app
     environment:
       - XDEBUG_CONFIG
