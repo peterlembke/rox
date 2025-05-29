@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-CMD=rox/main.sh
-CMD_LEGACY=docker/run.sh
+CMD=rox/main.php
+CMD_LEGACY=rox/main.sh
 CWD="$(pwd)"
 
 while [ ! -f "$CMD" -a ! -f "$CMD_LEGACY" ]

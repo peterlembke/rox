@@ -87,9 +87,9 @@ services:
 #    ports:
 #      - "${PROJECT_IP}:1080:1080"
 
-#  phpdoc:
-#    container_name: ${PROJECT_NAME}-phpdoc
-#    image: phpdoc/phpdoc
+  phpdoc:
+    container_name: ${PROJECT_NAME}-phpdoc
+    image: phpdoc/phpdoc
 
   # https://hub.docker.com/_/mongo
   mongo:

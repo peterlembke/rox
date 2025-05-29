@@ -52,6 +52,8 @@ compose_cmd()
     os=mac
   fi
 
+  # notice "$COMPOSE_BIN compose --file $COMPOSE_DIR/docker-compose.yml --project-name $COMPOSE_PROJECT_NAME --file $COMPOSE_DIR/docker-compose.$os.yml "; notice "$@"; echo
+
   "$COMPOSE_BIN" compose \
     --file "$COMPOSE_DIR"/docker-compose.yml \
     --project-name "$COMPOSE_PROJECT_NAME" \
