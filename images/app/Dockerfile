@@ -45,7 +45,8 @@ RUN apt update && apt install -y \
   php${PHP_VERSION}-redis \
   php${PHP_VERSION}-sqlite3 \
   php${PHP_VERSION}-xdebug \
-  php${PHP_VERSION}-intl
+  php${PHP_VERSION}-intl \
+  php${PHP_VERSION}-posix
 
 # Install composer
 RUN wget -qO- https://getcomposer.org/installer \

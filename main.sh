@@ -85,6 +85,16 @@ laravel_cmd()
 }
 
 #############################################
+
+# Run infohub CLI command
+infohub_cmd()
+{
+  container_exec appserver root \
+    php -f "$ROX_BASE_DIR"'/folder/tools/hub' -- "$@"
+}
+
+#############################################
+
 # Run Composer command
 composer_cmd()
 {
@@ -546,6 +556,13 @@ if [ "$1" = 'laravel' ]
   then
     shift
     laravel_cmd "$@"
+
+#############################################
+# Handle "infohub" action
+elif [ "$1" = 'infohub' ]
+  then
+    shift
+    infohub_cmd "$@"
 
 #############################################
 # Handle laravel artisan action
