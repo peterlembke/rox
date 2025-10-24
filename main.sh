@@ -17,8 +17,8 @@ else
 fi
 
 export COMPOSE_PROJECT_NAME="$PROJECT_NAME"
-export HOST_UID=1000
-export HOST_GID=1000
+export HOST_UID=1100
+export HOST_GID=1100
 
 if [[ "$OSTYPE" == "linux"* ]]
 then
@@ -207,6 +207,13 @@ redis_cmd()
     shift
   fi
   container_exec cacheserver root redis-cli -p "$port" -n "$db" "$@"
+
+  # If you run keydb-cli you get
+  # Flushing Redis Cache .. exit status 127
+  # OCI runtime exec failed: exec failed: unable to start container process: exec: "redis-cli": executable file not found in $PATH: unknown
+  # rox shell cache root
+  # cd /usr/local/bin
+  # ln -s /usr/local/bin/keydb-cli /usr/local/bin/redis-cli
 }
 
 #############################################
@@ -435,8 +442,56 @@ test_unit_laravel()
     notice 'Testing '; success "$subject"; echo ' ..'
     local hostpath="$cwd/$subject"
     local guestpath="$ROX_BASE_DIR/${hostpath/$bd\//}"
+
     container_exec appserver dockerhost \
       php -f "$phpunit" -- -c "$config" "${@:$nsubs+1}" "$guestpath"
+  done
+}
+
+#############################################
+
+# Run PHPUnit test in app container
+# This is a plain application with a vendor folder
+test_unit_plain()
+{
+  # Not working, the relative paths are not correct
+
+  local subjects
+  local nsubs=0
+  local bd="$(cd "$COMPOSE_DIR"/.. && pwd)"
+  local cwd="$(pwd)"
+  local phpunit='vendor/phpunit/phpunit/phpunit'
+  local config='phpunit.xml'
+
+  # Find number of arguments until first option (if any)
+  for arg in "$@"
+  do
+    [[ "$arg" = -* ]] && break
+    let ++nsubs
+  done
+
+  if [ $nsubs -eq 0 ]
+  then
+    # No test subjects given - run full suite
+    container_exec appserver dockerhost \
+      php -f "$phpunit" -- -c "$config" "${@:$nsubs+1}"
+    return
+  fi
+
+  for subject in "${@:1:$nsubs}"
+  do
+    if [ ! -e "$subject" ]
+    then
+      error "Cannot access '$subject': No such file or directory"; echo 1>&2
+      continue
+    fi
+
+    notice 'Testing '; success "$subject"; echo ' ..'
+    local hostpath="$cwd/$subject"
+    local guestpath="${hostpath/$bd\//}"
+
+    container_exec appserver dockerhost \
+      php -f "$phpunit" -- "${@:$nsubs+1}" "$guestpath"
   done
 }
 
@@ -734,6 +789,11 @@ elif [ "$1" = 'unit' ]
         shift
         shift
         test_unit_laravel "$@"
+    elif [ "$2" = 'plain' ]
+    then
+        shift
+        shift
+        test_unit_plain "$@"
     elif [ "$2" = 'paratest' ]
     then
         shift
