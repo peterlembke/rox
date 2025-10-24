@@ -65,6 +65,7 @@ RUN apt update && apt install -y \
   php${PHP_VERSION}-curl \
   php${PHP_VERSION}-xml \
   php${PHP_VERSION}-mailparse
+  php${PHP_VERSION}-posix
 
 # Install composer
 RUN wget -qO- https://getcomposer.org/installer \
