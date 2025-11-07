@@ -2,12 +2,12 @@ ServerName localhost
 
 <VirtualHost *:80>
 
-  ServerName atlas-api.aktivbo.dev.local
-  DocumentRoot "/var/www/public"
+  ServerName dev.local
+  DocumentRoot "/var/www/public_html"
 
   Timeout 600
 
-  <Directory "/var/www">
+  <Directory "/var/www/public_html">
     Options Indexes FollowSymLinks
     AllowOverride All
     Require all granted
@@ -16,7 +16,7 @@ ServerName localhost
 
   # .htaccess does not work in the docker environment because of ProxyPassMatch.
   # All requests are redirected to the app docker box. The .htaccess is never used.
-  ProxyPassMatch ^/(.*\.php(/.*)?)$ fcgi://appserver:9000/var/www/public/$1
+  ProxyPassMatch ^/(.*\.php(/.*)?)$ fcgi://appserver:9000/var/www/public_html/$1
   SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
 
   ErrorLog ${APACHE_LOG_DIR}/error.log

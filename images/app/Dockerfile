@@ -2,8 +2,8 @@ FROM ubuntu:24.04
 
 LABEL org.opencontainers.image.authors="Peter Lembke rox@charzam.com"
 
-ARG HOST_UID=1000
-ARG HOST_GID=1000
+ARG HOST_UID=1100
+ARG HOST_GID=1100
 ARG PHP_VERSION=8.3
 ARG DEBIAN_FRONTEND=noninteractive
 ARG GITHUB_TOKEN
@@ -14,6 +14,18 @@ ENV FPM_USER dockerhost
 ENV FPM_GROUP dockerhost
 ENV PHP_VERSION $PHP_VERSION
 ENV GITHUB_TOKEN $GITHUB_TOKEN
+
+# Create the group with the specified GID
+RUN groupadd -g $HOST_GID $FPM_GROUP
+
+# Create the user with the specified UID and add it to the dockerhost group
+RUN useradd -u $HOST_UID -g $FPM_GROUP -m $FPM_USER
+
+# Add the user to the root group
+RUN usermod -aG root $FPM_USER
+
+# Switch to the new user
+# USER dockerhost
 
 ENV TZ=Europe/Stockholm
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
@@ -35,17 +47,24 @@ RUN apt update && apt install -y \
 
 RUN apt update && apt install -y \
   php${PHP_VERSION}-apcu \
+  php${PHP_VERSION}-common \
   php${PHP_VERSION}-cli \
   php${PHP_VERSION}-curl \
   php${PHP_VERSION}-dev \
   php${PHP_VERSION}-fpm \
   php${PHP_VERSION}-mbstring \
+  php${PHP_VERSION}-bcmath \
   php${PHP_VERSION}-mysql \
   php${PHP_VERSION}-opcache \
   php${PHP_VERSION}-redis \
   php${PHP_VERSION}-sqlite3 \
   php${PHP_VERSION}-xdebug \
   php${PHP_VERSION}-intl \
+  php${PHP_VERSION}-zip \
+  php${PHP_VERSION}-gd \
+  php${PHP_VERSION}-curl \
+  php${PHP_VERSION}-xml \
+  php${PHP_VERSION}-mailparse
   php${PHP_VERSION}-posix
 
 # Install composer

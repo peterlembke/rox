@@ -67,7 +67,7 @@ services:
     ports:
       - "${PROJECT_IP}:3306:3306"
     volumes:
-      - /var/lib/mysql
+      - mariadb-data:/var/lib/mysql
 
   cacheserver:
     container_name: ${PROJECT_NAME}-cache
@@ -109,8 +109,8 @@ services:
 
 volumes:
   mongo-data:
-    driver:
-      local
+    driver: local
   mongo-config:
-    driver:
-      local
+    driver: local
+  mariadb-data:
+    driver: local
