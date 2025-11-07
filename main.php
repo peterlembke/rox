@@ -1,4 +1,8 @@
 <?php
+// Debug: print the absolute path to this main.php (to stderr when running via CLI)
+if (PHP_SAPI === 'cli') {
+    fwrite(STDERR, "rox main.php path: " . realpath(__FILE__) . PHP_EOL);
+}
 /**
  * Main PHP script for managing Docker containers and various services
  * This is a PHP implementation of the main.sh bash script
@@ -14,8 +18,8 @@ class Main
     protected string $composeDir;
     protected string $projectName = "rox";
     protected string $composeProjectName = "rox";
-    protected string $hostUid = "1000";
-    protected string $hostGid = "1000";
+    protected string $hostUid = "1100";
+    protected string $hostGid = "1100";
     protected string $roxBaseDir = "/var/www/rox";
     protected string $roxDbUser = "root";
     protected string $roxDbPass = "";

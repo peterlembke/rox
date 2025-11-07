@@ -5,6 +5,9 @@ DOCKER_BIN="$(which docker)"
 COMPOSE_BIN="$DOCKER_BIN"
 COMPOSE_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+# Debug: print the absolute path to this main.sh (to stderr)
+echo "rox main.sh path: $COMPOSE_DIR/main.sh" 1>&2
+
 source "$COMPOSE_DIR/default.conf"
 
 if [[ "$OSTYPE" == "linux"* ]]
@@ -20,11 +23,14 @@ export COMPOSE_PROJECT_NAME="$PROJECT_NAME"
 export HOST_UID=1100
 export HOST_GID=1100
 
-if [[ "$OSTYPE" == "linux"* ]]
-then
-  export HOST_UID=$(id -u)
-  export HOST_GID=$(id -g)
-fi
+# if [[ "$OSTYPE" == "linux"* ]]
+# then
+# If Linux then override the variables above and use the host system variables
+  # shellcheck disable=SC2155
+#   export HOST_UID=$(id -u)
+  # shellcheck disable=SC2155
+#   export HOST_GID=$(id -g)
+# fi
 
 #############################################
 # Utility functions
