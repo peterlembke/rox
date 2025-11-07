@@ -1,4 +1,3 @@
-#!/usr/bin/env php
 <?php
 /**
  * Main PHP script for managing Docker containers and various services
@@ -290,7 +289,7 @@ class Main
     /**
      * Wrapper for echoing a new line
      * Do not want a lot of echo in the code
-     * 
+     *
      * @return void
      */
     protected function newLine(): void
@@ -355,11 +354,11 @@ class Main
         }
 
         $args = [
-            'ps', 
-            '-q', 
+            'ps',
+            '-q',
             $containerName
         ];
-        
+
         $response = $this->composeCmd(args: $args);
         if ($response['answer'] === false) {
             return [
@@ -421,7 +420,7 @@ class Main
     protected function composerCmd(
         array $args = []
     ): array {
-        
+
         $commandStringArray = [
             'composer',
             '--working-dir=' . $this->roxBaseDir,
@@ -528,7 +527,7 @@ class Main
      */
     protected function mysqlDump(
         string $db = ''
-    ): array 
+    ): array
     {
         if (empty($db) === true) {
             $db = $this->roxDbName;
@@ -713,7 +712,7 @@ class Main
      */
     protected function phpstanCmd(
         array $args = []
-    ): array 
+    ): array
     {
         $cmd = 'vendor/bin/phpstan';
 
@@ -770,7 +769,7 @@ class Main
     protected function execShell(
         string $containerName = 'appserver',
         string $userName = ''
-    ): array 
+    ): array
     {
         if (empty($containerName) === true) {
             $containerName = 'appserver';

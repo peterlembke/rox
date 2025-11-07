@@ -1,7 +1,6 @@
 ServerName localhost
 
 # Use this config for your labs server where public_html is where you have all your files
-# See other default.conf in this folder
 
 <VirtualHost *:80>
 
