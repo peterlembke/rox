@@ -99,6 +99,11 @@ RUN pecl install mongodb
 COPY gnupg.ini "/etc/php/${PHP_VERSION}/mods-available/gnupg.ini"
 RUN pecl install gnupg
 
+# Xdebug logging and other log files
+RUN mkdir --parents /var/www/log
+RUN chown -R www-data:www-data /var/www/log
+RUN chmod -R 775 /var/www/log
+
 # xDebug
 # The xdebug distributed with Ubuntu 20.04 LTS is v2.9.2, we want v3.0.x
 # Make sure the client firewall accept incoming tcp on port 9000 and 9003
