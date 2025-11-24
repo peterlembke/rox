@@ -55,6 +55,10 @@ services:
       - "host2.local:172.18.0.1"
       - "host3.local:172.19.0.1"
       - "host4.local:172.20.0.1"
+    models:
+      aimodel:
+        endpoint_var: MODEL_RUNNER_URL
+        model_var: MODEL_RUNNER_MODEL
 
   dbserver:
     container_name: ${PROJECT_NAME}-db
@@ -127,5 +131,5 @@ models:
     context_size: 50000
     runtime_flags:
       - "--parallel"
-      - "32"
+      - "64"
       - "--no-prefill-assistant"
