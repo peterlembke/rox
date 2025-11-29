@@ -60,6 +60,40 @@ services:
         endpoint_var: MODEL_RUNNER_URL
         model_var: MODEL_RUNNER_MODEL
 
+  # FrankenPHP in classic mode serving the same codebase on separate ports
+  frankenphp:
+    container_name: ${PROJECT_NAME}-frankenphp
+    build:
+      context: ./images/frankenphp
+      args:
+        - PHP_VERSION=${PHP_VERSION}
+    image: ${PROJECT_NAME}-frankenphp
+    expose:
+      - "80"
+      - "443"
+    ports:
+      - "${PROJECT_IP}:8080:80"
+      - "${PROJECT_IP}:8443:443"
+    volumes:
+      - ..:/var/www
+    environment:
+      # Classic mode with explicit config; serve from /var/www/public_html
+      FRANKENPHP_CONFIG: |
+        frankenphp {
+          worker 2
+        }
+        :80 {
+          root * /var/www/public_html
+          php_server
+          file_server
+        }
+        :443 {
+          root * /var/www/public_html
+          tls internal
+          php_server
+          file_server
+        }
+
   dbserver:
     container_name: ${PROJECT_NAME}-db
     image: library/mariadb:latest
