@@ -969,7 +969,7 @@ else
   if [ "$1" = 'start' ]
   then
     pwd
-    cp phpstan.neon.dist ../phpstan.neon.dist
+    cp rox/phpstan.neon.dist phpstan.neon.dist
     update_hosts_file "$@"
     notice 'Enabling opcache'; echo
     container_exec appserver root phpenmod "opcache"
