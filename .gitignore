@@ -4,3 +4,4 @@ project.conf.linux
 .DS_Store
 .vscode
 .phpdoc
+/data

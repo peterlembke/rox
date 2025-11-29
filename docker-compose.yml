@@ -55,6 +55,10 @@ services:
       - "host2.local:172.18.0.1"
       - "host3.local:172.19.0.1"
       - "host4.local:172.20.0.1"
+    models:
+      aimodel:
+        endpoint_var: MODEL_RUNNER_URL
+        model_var: MODEL_RUNNER_MODEL
 
   dbserver:
     container_name: ${PROJECT_NAME}-db
@@ -67,7 +71,7 @@ services:
     ports:
       - "${PROJECT_IP}:3306:3306"
     volumes:
-      - mariadb-data:/var/lib/mysql
+      - ./data/mariadb:/var/lib/mysql
 
   cacheserver:
     container_name: ${PROJECT_NAME}-cache
@@ -94,7 +98,7 @@ services:
   # https://hub.docker.com/_/mongo
   mongo:
     container_name: ${PROJECT_NAME}-mongo
-    image: mongo:8.0.3-noble
+    image: mongo:latest
     restart: always
     expose:
       - "27017"
@@ -104,13 +108,28 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: infohub
     volumes:
-      - mongo-data:/mongo/data
-      - mongo-config:/mongo/config
+      - ./data/mongodb/data:/data/db
+      - ./data/mongodb/config:/data/configdb
 
-volumes:
-  mongo-data:
-    driver: local
-  mongo-config:
-    driver: local
-  mariadb-data:
-    driver: local
+  # https://github.com/garethflowers/docker-ftp-server
+  ftpserver:
+    container_name: ${PROJECT_NAME}-ftp
+    environment:
+      - PUBLIC_IP=0.0.0.0
+      - FTP_PASS=123
+      - FTP_USER=user
+    image: garethflowers/ftp-server
+    ports:
+      - "20-21:20-21/tcp"
+      - "40000-40009:40000-40009/tcp" # For passive mode
+    volumes:
+      - "./data/ftp/user:/home/user"
+
+models:
+  aimodel:
+    model: ${LLM_MODEL_NAME}  # Exported from default.conf (line 45)
+    context_size: 50000
+    runtime_flags:
+      - "--parallel"
+      - "64"
+      - "--no-prefill-assistant"

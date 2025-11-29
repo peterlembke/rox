@@ -8,8 +8,16 @@ COMPOSE_DIR="$(cd "$(dirname "$0")" && pwd)"
 # Debug: print the absolute path to this main.sh (to stderr)
 echo "rox main.sh path: $COMPOSE_DIR/main.sh" 1>&2
 
+# Load base defaults shared by all platforms
 source "$COMPOSE_DIR/default.conf"
 
+# Platform-specific overrides, read in this exact order:
+# 1) project.conf.dist.<os>  - The tracked default config for the detected OS (always sourced)
+# 2) project.conf.<os>       - Optional, untracked local overrides for the OS (only sourced if file exists)
+#
+# Detected OS is based on $OSTYPE. For Linux we use the linux files, otherwise we assume macOS.
+# This means the effective/active configuration is: default.conf → project.conf.dist.<os> → project.conf.<os> (if present),
+# where values from later files override earlier ones.
 if [[ "$OSTYPE" == "linux"* ]]
 then
   source "$COMPOSE_DIR/project.conf.dist.linux"
@@ -47,6 +55,68 @@ notice()  { printc "$1" "1;34";       }
 success() { printc "$1" "0;32";       }
 error()   { printc "$1" "1;31" 2>&1;  }
 warning() { printc "$1" "1;33" 2>&1;  }
+
+# Validate required environment variables
+if [ -z "${GITHUB_TOKEN+x}" ] || [ -z "$GITHUB_TOKEN" ]; then
+  warning 'GITHUB_TOKEN is not set or empty. Please set it in your config files (default.conf/project.conf.*) or environment.'; echo
+  exit 1
+fi
+
+#############################################
+# Show which configuration files are used and in what order
+show_config_used()
+{
+  local os_label="linux"
+  if [[ "$OSTYPE" == "darwin"* ]]; then os_label="mac"; fi
+
+  echo "Configuration overview:" 1>&2
+  echo "- Detected OSTYPE: $OSTYPE (using $os_label config set)" 1>&2
+  echo "- Compose dir: $COMPOSE_DIR" 1>&2
+  echo "- Load order (later overrides earlier):" 1>&2
+  echo "  1) $COMPOSE_DIR/default.conf           [sourced: yes]" 1>&2
+  if [[ "$os_label" == "linux" ]]
+  then
+    echo "  2) $COMPOSE_DIR/project.conf.dist.linux [sourced: yes]" 1>&2
+    if [ -f "$COMPOSE_DIR/project.conf.linux" ]; then
+      echo "  3) $COMPOSE_DIR/project.conf.linux      [sourced: yes]" 1>&2
+    else
+      echo "  3) $COMPOSE_DIR/project.conf.linux      [missing: no local overrides]" 1>&2
+    fi
+  else
+    echo "  2) $COMPOSE_DIR/project.conf.dist.mac    [sourced: yes]" 1>&2
+    if [ -f "$COMPOSE_DIR/project.conf.mac" ]; then
+      echo "  3) $COMPOSE_DIR/project.conf.mac         [sourced: yes]" 1>&2
+    else
+      echo "  3) $COMPOSE_DIR/project.conf.mac         [missing: no local overrides]" 1>&2
+    fi
+  fi
+
+  echo 1>&2
+  echo "Selected key values (effective)" 1>&2
+  # List of non-sensitive variables to display (avoid passwords/secrets)
+  local vars=(
+    PROJECT_NAME
+    COMPOSE_PROJECT_NAME
+    PHP_VERSION
+    HOST_URL
+    DB_URL
+    ROX_BASE_DIR
+    ROX_DB_NAME
+    ROX_DB_USER
+    ROX_CACHE_BACKEND_REDIS_DB
+    ROX_PAGE_CACHE_REDIS_DB
+    ROX_SESSION_SAVE_REDIS_DB
+    GITHUB_TOKEN
+    XDEBUG_CONFIG
+  )
+  for v in "${vars[@]}"; do
+    # Use indirect expansion to read variable by name
+    local val="${!v}"
+    if [ -n "$val" ]; then
+      echo "  $v=$val" 1>&2
+    fi
+  done
+}
 
 #############################################
 # Run docker-compose command
@@ -842,6 +912,12 @@ elif [ "$1" = 'analyse' ]
     phpstan_cmd "$@"
 
 #############################################
+# Handle "config" action
+elif [ "$1" = 'config' ]
+  then
+    show_config_used
+
+#############################################
 # Handle empty action
 elif [ "x$1" = 'x' ]
   then
@@ -893,7 +969,7 @@ else
   if [ "$1" = 'start' ]
   then
     pwd
-    cp rox/phpstan.neon.dist phpstan.neon.dist
+    cp phpstan.neon.dist ../phpstan.neon.dist
     update_hosts_file "$@"
     notice 'Enabling opcache'; echo
     container_exec appserver root phpenmod "opcache"
