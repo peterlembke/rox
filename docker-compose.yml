@@ -127,7 +127,7 @@ services:
 
 models:
   aimodel:
-    model: ${LLM_MODEL_NAME}  # Pulled from the .env file
+    model: ${LLM_MODEL_NAME}  # Exported from default.conf (line 45)
     context_size: 50000
     runtime_flags:
       - "--parallel"
