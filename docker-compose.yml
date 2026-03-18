@@ -67,7 +67,8 @@ services:
     ports:
       - "${PROJECT_IP}:3306:3306"
     volumes:
-      - ./data/mariadb:/var/lib/mysql
+      - ./data/mariadb/data:/var/lib/mysql
+      - ./data/mariadb/dumpdir:/data/dumpdir
 
   # rox build cacheserver
   # rox up -d --pull
