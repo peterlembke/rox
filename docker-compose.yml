@@ -67,12 +67,15 @@ services:
     ports:
       - "${PROJECT_IP}:3306:3306"
     volumes:
-      - mariadb-data:/var/lib/mysql
+      - ./data/mariadb:/var/lib/mysql
 
+  # rox build cacheserver
+  # rox up -d --pull
   cacheserver:
     container_name: ${PROJECT_NAME}-cache
 #    image: library/redis:latest
-    image: eqalpha/keydb:latest
+    #    image: eqalpha/keydb:latest
+    image: ghcr.io/dragonflydb/dragonfly:latest # https://github.com/dragonflydb/dragonfly/pkgs/container/dragonfly/versions
     expose:
       - "6379"
     ports:
@@ -87,14 +90,15 @@ services:
 #    ports:
 #      - "${PROJECT_IP}:1080:1080"
 
-  phpdoc:
-    container_name: ${PROJECT_NAME}-phpdoc
-    image: phpdoc/phpdoc
+  #  phpdoc:
+  #    container_name: ${PROJECT_NAME}-phpdoc
+  #    image: phpdoc/phpdoc
 
   # https://hub.docker.com/_/mongo
-  mongo:
+  mongoserver:
     container_name: ${PROJECT_NAME}-mongo
-    image: mongo:8.0.3-noble
+    # image: mongo:8.0.3-noble
+    image: mongo:8.2.6-noble
     restart: always
     expose:
       - "27017"
@@ -104,13 +108,29 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: infohub
     volumes:
-      - mongo-data:/mongo/data
-      - mongo-config:/mongo/config
+      - ./data/mongodb/data:/data/db
+      - ./data/mongodb/config:/data/configdb
+      - ./data/mongodb/dumpdir:/data/dumpdir
 
-volumes:
-  mongo-data:
-    driver: local
-  mongo-config:
-    driver: local
-  mariadb-data:
-    driver: local
+  # https://github.com/garethflowers/docker-ftp-server
+  ftpserver:
+    container_name: ${PROJECT_NAME}-ftp
+    environment:
+      - PUBLIC_IP=0.0.0.0
+      - FTP_PASS=123
+      - FTP_USER=user
+    image: garethflowers/ftp-server
+    ports:
+      - "20-21:20-21/tcp"
+      - "40000-40009:40000-40009/tcp" # For passive mode
+    volumes:
+      - "./data/ftp/user:/home/user"
+
+# models:
+#  aimodel:
+#    model: ${LLM_MODEL_NAME}  # Exported from default.conf (line 45)
+#     context_size: 50000
+#     runtime_flags:
+#       - "--parallel"
+#       - "64"
+#       - "--no-prefill-assistant"
