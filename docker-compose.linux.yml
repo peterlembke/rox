@@ -22,4 +22,4 @@ services:
       # volumes:
       #   - libretranslate_api_keys:/app/db
       # Keep the models in a docker volume, to avoid re-downloading on startup
-      #   - libretranslate_models:/home/libretranslate/.local:rw
+      - libretranslate_models:/home/libretranslate/.local:rw

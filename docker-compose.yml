@@ -99,6 +99,7 @@ services:
     container_name: ${PROJECT_NAME}-mongo
     # image: mongo:8.0.3-noble
     image: mongo:8.2.6-noble
+    # image: mongo:latest
     restart: always
     expose:
       - "27017"
