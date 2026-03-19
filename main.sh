@@ -861,21 +861,24 @@ elif [ "$1" = 'container' ]
     fi
 
 #############################################
-# Handle "data-sync" action
-elif [ "$1" = 'data-sync' ]
+# Handle "import" action
+elif [ "$1" = 'import' ]
   then
     shift
-    if [ "$1" = 'db' ]
+    if [ "$1" = 'mongodb' ]
     then
       shift
-      "$COMPOSE_DIR"'/data-sync/db.sh' "$@"
-    elif [ "$1" = 'media' ]
-    then
-      shift
-      "$COMPOSE_DIR"'/data-sync/media.sh' "$@"
+      databaseDir="$1"
+      if [ "x$databaseDir" = 'x' ]
+      then
+        error 'Missing database directory parameter'; echo >&2
+        echo 'Usage: rox import mongodb {databasedir}' >&2
+        exit 1
+      fi
+      container_exec mongoserver root bash -c "cd /data/dumpdir/ && ./mongodb-import.sh $databaseDir"
     else
-      error 'Synchronize what?'; echo >&2
-      echo 'Did you mean "data-sync db" or "data-sync media"?' >&2
+      error 'Import what?'; echo >&2
+      echo 'Usage: rox import mongodb {databasedir}' >&2
       exit 1
     fi
 
@@ -955,9 +958,7 @@ Usage:
   container                 Container commands
     ip {app/web/cache/db}   Get IP for a container
     url                     Set web server URL in app HOSTS file
-  data-sync                 Synchronize with remote data
-    data-sync db            Download and import a remote database
-    data-sync media         Download remote media files
+  import mongodb {dir}      Run mongodb-import.sh in mongoserver container
   unit <path> <options>     Run PHPUnit tests
   unit {laravel|paratest|coverage}  Run PHPUnit tests
   analyse                   Analyse the PHP code with PHPStan
