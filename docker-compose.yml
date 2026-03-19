@@ -115,18 +115,18 @@ services:
       - ./data/mongodb/dumpdir:/data/dumpdir
 
   # https://github.com/garethflowers/docker-ftp-server
-  ftpserver:
-    container_name: ${PROJECT_NAME}-ftp
-    environment:
-      - PUBLIC_IP=0.0.0.0
-      - FTP_PASS=123
-      - FTP_USER=user
-    image: garethflowers/ftp-server
-    ports:
-      - "20-21:20-21/tcp"
-      - "40000-40009:40000-40009/tcp" # For passive mode
-    volumes:
-      - "./data/ftp/user:/home/user"
+#  ftpserver:
+#    container_name: ${PROJECT_NAME}-ftp
+#    environment:
+#      - PUBLIC_IP=0.0.0.0
+#      - FTP_PASS=123
+#      - FTP_USER=user
+#    image: garethflowers/ftp-server
+#    ports:
+#      - "20-21:20-21/tcp"
+#      - "40000-40009:40000-40009/tcp" # For passive mode
+#    volumes:
+#      - "./data/ftp/user:/home/user"
 
 # models:
 #  aimodel:
