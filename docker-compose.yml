@@ -55,10 +55,6 @@ services:
       - "host2.local:172.18.0.1"
       - "host3.local:172.19.0.1"
       - "host4.local:172.20.0.1"
-    models:
-      aimodel:
-        endpoint_var: MODEL_RUNNER_URL
-        model_var: MODEL_RUNNER_MODEL
 
   dbserver:
     container_name: ${PROJECT_NAME}-db
@@ -71,12 +67,16 @@ services:
     ports:
       - "${PROJECT_IP}:3306:3306"
     volumes:
-      - ./data/mariadb:/var/lib/mysql
+      - ./data/mariadb/data:/var/lib/mysql
+      - ./data/mariadb/dumpdir:/data/dumpdir
 
+  # rox build cacheserver
+  # rox up -d --pull
   cacheserver:
     container_name: ${PROJECT_NAME}-cache
 #    image: library/redis:latest
-    image: eqalpha/keydb:latest
+    #    image: eqalpha/keydb:latest
+    image: ghcr.io/dragonflydb/dragonfly:latest # https://github.com/dragonflydb/dragonfly/pkgs/container/dragonfly/versions
     expose:
       - "6379"
     ports:
@@ -91,14 +91,16 @@ services:
 #    ports:
 #      - "${PROJECT_IP}:1080:1080"
 
-  phpdoc:
-    container_name: ${PROJECT_NAME}-phpdoc
-    image: phpdoc/phpdoc
+  #  phpdoc:
+  #    container_name: ${PROJECT_NAME}-phpdoc
+  #    image: phpdoc/phpdoc
 
   # https://hub.docker.com/_/mongo
-  mongo:
+  mongoserver:
     container_name: ${PROJECT_NAME}-mongo
-    image: mongo:latest
+    # image: mongo:8.0.3-noble
+    image: mongo:8.2.6-noble
+    # image: mongo:latest
     restart: always
     expose:
       - "27017"
@@ -110,26 +112,27 @@ services:
     volumes:
       - ./data/mongodb/data:/data/db
       - ./data/mongodb/config:/data/configdb
+      - ./data/mongodb/dumpdir:/data/dumpdir
 
   # https://github.com/garethflowers/docker-ftp-server
-  ftpserver:
-    container_name: ${PROJECT_NAME}-ftp
-    environment:
-      - PUBLIC_IP=0.0.0.0
-      - FTP_PASS=123
-      - FTP_USER=user
-    image: garethflowers/ftp-server
-    ports:
-      - "20-21:20-21/tcp"
-      - "40000-40009:40000-40009/tcp" # For passive mode
-    volumes:
-      - "./data/ftp/user:/home/user"
+#  ftpserver:
+#    container_name: ${PROJECT_NAME}-ftp
+#    environment:
+#      - PUBLIC_IP=0.0.0.0
+#      - FTP_PASS=123
+#      - FTP_USER=user
+#    image: garethflowers/ftp-server
+#    ports:
+#      - "20-21:20-21/tcp"
+#      - "40000-40009:40000-40009/tcp" # For passive mode
+#    volumes:
+#      - "./data/ftp/user:/home/user"
 
-models:
-  aimodel:
-    model: ${LLM_MODEL_NAME}  # Exported from default.conf (line 45)
-    context_size: 50000
-    runtime_flags:
-      - "--parallel"
-      - "64"
-      - "--no-prefill-assistant"
+# models:
+#  aimodel:
+#    model: ${LLM_MODEL_NAME}  # Exported from default.conf (line 45)
+#     context_size: 50000
+#     runtime_flags:
+#       - "--parallel"
+#       - "64"
+#       - "--no-prefill-assistant"

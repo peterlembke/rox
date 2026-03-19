@@ -6,3 +6,4 @@ project.conf.linux
 .phpdoc
 /data
 /log
+.junie/

@@ -319,18 +319,22 @@ fpm_cmd()
 phpstan_cmd()
 {
   local cmd='vendor/bin/phpstan'
+  local config_file="$ROX_BASE_DIR/phpstan.neon"
+  local fallback_config="$ROX_BASE_DIR/phpstan.neon.dist"
 
   if [ "x$1" = 'x' ]
     then
       container_exec appserver root \
-        php -f "$ROX_BASE_DIR/""$cmd" "analyse" "-c" "$ROX_BASE_DIR/phpstan.neon.dist"
+        php -f "$ROX_BASE_DIR/""$cmd" "analyse" "-c" "$config_file"
       return 0
   fi
 
   if [ "$1" = '--level' ]
     then
+      local full="$ROX_BASE_DIR/$cmd analyse -c $config_file --level $2"
+      notice "$full"; echo
       container_exec appserver root \
-        php -f "$ROX_BASE_DIR/""$cmd" "analyse" "-c" "$ROX_BASE_DIR/phpstan.neon.dist" "--level" "$2"
+        php -f "$ROX_BASE_DIR/""$cmd" "analyse" "-c" "$config_file" "--level" "$2"
       return 0
   fi
 
