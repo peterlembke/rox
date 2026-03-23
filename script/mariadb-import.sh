@@ -5,16 +5,33 @@ DB_USER="root"
 DB_PASS="topsecret"
 
 usage() {
-  echo "Usage: $(basename "$0") /full/path/to/file.sql" >&2
+  echo "Usage: $(basename "$0") /full/path/to/file.sql [--force]" >&2
   echo "- Run as a user with permission to access MariaDB." >&2
   echo "- The script will import the SQL file into a database derived from the file name." >&2
   echo "- Example: 'laravelapi_dev.sql' will import into database 'laravelapi_dev'." >&2
+  echo "- If the database already has tables, import is skipped unless --force is used." >&2
 }
 
 if [[ ${1-} == "-h" || ${1-} == "--help" ]]; then
   usage
   exit 0
 fi
+
+FORCE=false
+for arg in "$@"; do
+  if [[ "$arg" == "--force" ]]; then
+    FORCE=true
+  fi
+done
+
+# Remove --force from positional parameters
+ARGS=()
+for arg in "$@"; do
+  if [[ "$arg" != "--force" ]]; then
+    ARGS+=("$arg")
+  fi
+done
+set -- "${ARGS[@]+${ARGS[@]}}"
 
 if [[ $# -lt 1 ]]; then
   echo "Error: Missing required argument: path to SQL file" >&2
@@ -44,6 +61,17 @@ if [[ "$DB_NAME" == "$BASE_NAME" ]]; then
 fi
 
 echo "Preparing to import '$SQL_FILE' into database '$DB_NAME'."
+
+# Check if the database already has tables
+TABLE_COUNT_EXISTING=$(mariadb -u"$DB_USER" -p"$DB_PASS" -e "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='$DB_NAME';" --skip-column-names 2>/dev/null)
+if [[ -n "$TABLE_COUNT_EXISTING" && "$TABLE_COUNT_EXISTING" -gt 0 ]]; then
+  if [[ "$FORCE" == "false" ]]; then
+    echo -e "\e[1;33mDatabase '$DB_NAME' already has $TABLE_COUNT_EXISTING tables. Skipping import. Use --force to overwrite.\e[0m"
+    exit 0
+  else
+    echo "Database '$DB_NAME' already has $TABLE_COUNT_EXISTING tables. --force used, proceeding with import."
+  fi
+fi
 
 # Step 1/3: Drop the database if it exists
 echo "Step 1/3: Dropping database '$DB_NAME' if it exists..."

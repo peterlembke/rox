@@ -875,9 +875,15 @@ elif [ "$1" = 'import' ]
         echo 'Usage: rox import mongodb {databasedir}' >&2
         exit 1
       fi
+      shift
+      forceFlag=""
+      if [ "$1" = '--force' ]
+      then
+        forceFlag="--force"
+      fi
       notice "Copying mongodb-import.sh to data/mongodb/dumpdir"; echo
       cp "$COMPOSE_DIR/script/mongodb-import.sh" "$COMPOSE_DIR/data/mongodb/dumpdir/"
-      container_exec mongoserver root bash -c "cd /data/dumpdir/ && ./mongodb-import.sh $databaseDir"
+      container_exec mongoserver root bash -c "cd /data/dumpdir/ && ./mongodb-import.sh $databaseDir $forceFlag"
     elif [ "$1" = 'mariadb' ]
     then
       shift
@@ -888,9 +894,15 @@ elif [ "$1" = 'import' ]
         echo 'Usage: rox import mariadb {databasename}.sql' >&2
         exit 1
       fi
+      shift
+      forceFlag=""
+      if [ "$1" = '--force' ]
+      then
+        forceFlag="--force"
+      fi
       notice "Copying mariadb-import.sh to data/mariadb/dumpdir"; echo
       cp "$COMPOSE_DIR/script/mariadb-import.sh" "$COMPOSE_DIR/data/mariadb/dumpdir/"
-      container_exec dbserver root bash -c "cd /data/dumpdir/ && ./mariadb-import.sh $databaseFile"
+      container_exec dbserver root bash -c "cd /data/dumpdir/ && ./mariadb-import.sh $databaseFile $forceFlag"
     else
       error 'Import what?'; echo >&2
       echo 'Usage: rox import mongodb {databasedir}' >&2
@@ -974,8 +986,8 @@ Usage:
   container                 Container commands
     ip {app/web/cache/db}   Get IP for a container
     url                     Set web server URL in app HOSTS file
-  import mongodb {dir}      Run mongodb-import.sh in mongoserver container
-  import mariadb {file}.sql Run mariadbb-import.sh in dbserver container
+  import mongodb {dir} [--force]      Run mongodb-import.sh in mongoserver container
+  import mariadb {file}.sql [--force]  Run mariadb-import.sh in dbserver container
   unit <path> <options>     Run PHPUnit tests
   unit {laravel|paratest|coverage}  Run PHPUnit tests
   analyse                   Analyse the PHP code with PHPStan

@@ -3,14 +3,31 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: $(basename "$0") /full/path/to/database/folder" >&2
+  echo "Usage: $(basename "$0") /full/path/to/database/folder [--force]" >&2
   echo "- The last segment of the path is treated as the MongoDB database name." >&2
+  echo "- If the database already has collections, import is skipped unless --force is used." >&2
 }
 
 if [[ ${1-} == "-h" || ${1-} == "--help" ]]; then
   usage
   exit 0
 fi
+
+FORCE=false
+for arg in "$@"; do
+  if [[ "$arg" == "--force" ]]; then
+    FORCE=true
+  fi
+done
+
+# Remove --force from positional parameters
+ARGS=()
+for arg in "$@"; do
+  if [[ "$arg" != "--force" ]]; then
+    ARGS+=("$arg")
+  fi
+done
+set -- "${ARGS[@]+${ARGS[@]}}"
 
 if [[ $# -lt 1 ]]; then
   echo "Error: Missing required argument: path to database folder" >&2
@@ -49,6 +66,17 @@ AUTH_DB="admin"
 AUTH_MECH="SCRAM-SHA-256"
 
 echo "Preparing to import database '$DB_NAME' from: $IMPORT_DIR"
+
+# Check if the database already has collections
+COLLECTION_COUNT=$(mongosh admin -u root -p infohub --quiet --eval "db.getSiblingDB('$DB_NAME').getCollectionNames().length" 2>/dev/null)
+if [[ -n "$COLLECTION_COUNT" && "$COLLECTION_COUNT" -gt 0 ]]; then
+  if [[ "$FORCE" == "false" ]]; then
+    echo -e "\e[1;33mDatabase '$DB_NAME' already has $COLLECTION_COUNT collections. Skipping import. Use --force to overwrite.\e[0m"
+    exit 0
+  else
+    echo "Database '$DB_NAME' already has $COLLECTION_COUNT collections. --force used, proceeding with import."
+  fi
+fi
 echo "Checking MongoDB connection parameters: $URI (auth DB: $AUTH_DB, mech: $AUTH_MECH)"
 
 echo "Step 1/2: Dropping existing database '$DB_NAME' (if any)..."
