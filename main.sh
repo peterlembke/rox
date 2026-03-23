@@ -875,6 +875,8 @@ elif [ "$1" = 'import' ]
         echo 'Usage: rox import mongodb {databasedir}' >&2
         exit 1
       fi
+      notice "Copying mongodb-import.sh to data/mongodb/dumpdir"; echo
+      cp "$COMPOSE_DIR/script/mongodb-import.sh" "$COMPOSE_DIR/data/mongodb/dumpdir/"
       container_exec mongoserver root bash -c "cd /data/dumpdir/ && ./mongodb-import.sh $databaseDir"
     elif [ "$1" = 'mariadb' ]
     then
@@ -886,6 +888,8 @@ elif [ "$1" = 'import' ]
         echo 'Usage: rox import mariadb {databasename}.sql' >&2
         exit 1
       fi
+      notice "Copying mariadb-import.sh to data/mariadb/dumpdir"; echo
+      cp "$COMPOSE_DIR/script/mariadb-import.sh" "$COMPOSE_DIR/data/mariadb/dumpdir/"
       container_exec dbserver root bash -c "cd /data/dumpdir/ && ./mariadb-import.sh $databaseFile"
     else
       error 'Import what?'; echo >&2
