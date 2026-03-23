@@ -1,10 +1,14 @@
 #!/bin/bash
 
+# Database credentials - change these if needed
+DB_USER="root"
+DB_PASS="topsecret"
+
 usage() {
-  echo "Usage: $(basename "$0") /full/path/to/backup-folder" >&2
-  echo "- Run as a user with permission to manage the MariaDB service." >&2
-  echo "- The script will stop the MariaDB service, restore the data directory, then start the service again." >&2
-  echo "- The path must be a directory created by 'mariadb-backup --backup' (and usually '--prepare')." >&2
+  echo "Usage: $(basename "$0") /full/path/to/file.sql" >&2
+  echo "- Run as a user with permission to access MariaDB." >&2
+  echo "- The script will import the SQL file into a database derived from the file name." >&2
+  echo "- Example: 'laravelapi_dev.sql' will import into database 'laravelapi_dev'." >&2
 }
 
 if [[ ${1-} == "-h" || ${1-} == "--help" ]]; then
@@ -13,89 +17,91 @@ if [[ ${1-} == "-h" || ${1-} == "--help" ]]; then
 fi
 
 if [[ $# -lt 1 ]]; then
-  echo "Error: Missing required argument: path to backup folder" >&2
+  echo "Error: Missing required argument: path to SQL file" >&2
   usage
   exit 1
 fi
 
-RESTORE_DIR="$1"
+SQL_FILE="$1"
 
-# Verify folder exists
-if [[ ! -d "$RESTORE_DIR" ]]; then
-  echo "Error: Folder does not exist: $RESTORE_DIR" >&2
+# Verify file exists
+if [[ ! -f "$SQL_FILE" ]]; then
+  echo "Error: File does not exist: $SQL_FILE" >&2
   exit 1
 fi
 
 # Check required commands
 need_cmd() { command -v "$1" >/dev/null 2>&1 || { echo "Error: '$1' not found in PATH" >&2; exit 1; }; }
-need_cmd mariadb-backup
-need_cmd chown
-need_cmd service
+need_cmd mariadb
 
-DATA_DIR="/var/lib/mysql"
+# Derive database name from file name by removing .sql extension
+BASE_NAME=$(basename "$SQL_FILE")
+DB_NAME="${BASE_NAME%.sql}"
 
-echo "Preparing to restore MariaDB data directory from: $RESTORE_DIR"
+if [[ "$DB_NAME" == "$BASE_NAME" ]]; then
+  echo "Error: File does not have a .sql extension: $SQL_FILE" >&2
+  exit 1
+fi
 
-# Step 1/5: Always stop the service
-echo "Step 1/5: Stopping MariaDB service..."
-service mariadb stop
+echo "Preparing to import '$SQL_FILE' into database '$DB_NAME'."
+
+# Step 1/3: Drop the database if it exists
+echo "Step 1/3: Dropping database '$DB_NAME' if it exists..."
+mariadb -u"$DB_USER" -p"$DB_PASS" -e "DROP DATABASE IF EXISTS \`$DB_NAME\`;"
 if [[ $? -ne 0 ]]; then
-  echo "Error: Failed to stop MariaDB service." >&2
+  echo "Error: Failed to drop database '$DB_NAME'." >&2
   exit 1
 fi
-echo "Step 1/5: OK - MariaDB service stopped."
-
-# Step 2/5: Clean data directory - check before and after
-echo "Step 2/5: Cleaning data directory '$DATA_DIR'..."
-
-IS_DIR_EMPTY=$(find "$DATA_DIR" -mindepth 1 -maxdepth 1 2>/dev/null | head -1)
-if [[ -n "$IS_DIR_EMPTY" ]]; then
-  rm -rf "$DATA_DIR"/*
-  if [[ $? -ne 0 ]]; then
-    echo "Error: Failed to clean data directory '$DATA_DIR'." >&2
-    exit 1
-  fi
-fi
-
-IS_DIR_EMPTY=$(find "$DATA_DIR" -mindepth 1 -maxdepth 1 2>/dev/null | head -1)
-if [[ -n "$IS_DIR_EMPTY" ]]; then
-  echo "Error: Data directory '$DATA_DIR' is not empty after cleaning." >&2
+# Verify the database was actually dropped
+DB_EXISTS=$(mariadb -u"$DB_USER" -p"$DB_PASS" -e "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME='$DB_NAME';" --skip-column-names 2>/dev/null)
+if [[ -n "$DB_EXISTS" ]]; then
+  echo "Error: Database '$DB_NAME' still exists after drop." >&2
   exit 1
 fi
-echo "Step 2/5: OK - Data directory '$DATA_DIR' is empty."
+echo "Step 1/3: OK - Database '$DB_NAME' dropped."
 
-# Step 3/5: Move back backup files and verify
-echo "Step 3/5: Moving back backup files into data directory..."
-mariadb-backup --move-back --target-dir="$RESTORE_DIR"
+# Step 2/3: Create the database
+echo "Step 2/3: Creating database '$DB_NAME'..."
+mariadb -u"$DB_USER" -p"$DB_PASS" -e "CREATE DATABASE \`$DB_NAME\`;"
 if [[ $? -ne 0 ]]; then
-  echo "Error: mariadb-backup --move-back failed." >&2
+  echo "Error: Failed to create database '$DB_NAME'." >&2
   exit 1
 fi
-
-IS_DIR_EMPTY=$(find "$DATA_DIR" -mindepth 1 -maxdepth 1 2>/dev/null | head -1)
-if [[ -z "$IS_DIR_EMPTY" ]]; then
-  echo "Error: Data directory '$DATA_DIR' is still empty after move-back. Database was not imported." >&2
+# Verify the database was actually created
+DB_EXISTS=$(mariadb -u"$DB_USER" -p"$DB_PASS" -e "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME='$DB_NAME';" --skip-column-names 2>/dev/null)
+if [[ -z "$DB_EXISTS" ]]; then
+  echo "Error: Database '$DB_NAME' does not exist after creation." >&2
   exit 1
 fi
-echo "Step 3/5: OK - Backup files moved into '$DATA_DIR'."
+echo "Step 2/3: OK - Database '$DB_NAME' created."
 
-# Step 4/5: Fix ownership
-echo "Step 4/5: Fixing ownership for '$DATA_DIR'..."
-chown -R mysql:mysql "$DATA_DIR"
-if [[ $? -ne 0 ]]; then
-  echo "Error: Failed to fix ownership for '$DATA_DIR'." >&2
+# Step 3/3: Disable foreign key checks, import the SQL file, re-enable foreign key checks
+echo "Step 3/3: Importing '$SQL_FILE' into database '$DB_NAME'..."
+SQL_FILE_ABS=$(realpath "$SQL_FILE")
+
+# Create a cleaned temporary copy to fix MySQL-to-MariaDB compatibility issues
+CLEAN_FILE=$(mktemp)
+sed 's/\\-/-/g' "$SQL_FILE_ABS" | sed '/NOTE_VERBOSITY/d' > "$CLEAN_FILE"
+
+mariadb -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" -e "
+SET GLOBAL FOREIGN_KEY_CHECKS=0;
+SOURCE $CLEAN_FILE;
+SET GLOBAL FOREIGN_KEY_CHECKS=1;
+"
+IMPORT_EXIT=$?
+rm -f "$CLEAN_FILE"
+
+if [[ $IMPORT_EXIT -ne 0 ]]; then
+  echo "Error: Failed to import '$SQL_FILE' into database '$DB_NAME'." >&2
+  mariadb -u"$DB_USER" -p"$DB_PASS" -e "SET GLOBAL FOREIGN_KEY_CHECKS=1;" 2>/dev/null
   exit 1
 fi
-echo "Step 4/5: OK - Ownership fixed."
-
-# Step 5/5: Always start the service
-echo "Step 5/5: Starting MariaDB service..."
-service mariadb start
-if [[ $? -ne 0 ]]; then
-  echo "Error: Failed to start MariaDB service." >&2
+# Verify that tables were actually imported
+TABLE_COUNT=$(mariadb -u"$DB_USER" -p"$DB_PASS" -e "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='$DB_NAME';" --skip-column-names 2>/dev/null)
+if [[ -z "$TABLE_COUNT" || "$TABLE_COUNT" -eq 0 ]]; then
+  echo "Error: No tables found in database '$DB_NAME' after import." >&2
   exit 1
 fi
-echo "Step 5/5: OK - MariaDB service started."
+echo "Step 3/3: OK - SQL file imported. $TABLE_COUNT tables found in database '$DB_NAME'. Foreign key checks re-enabled."
 
-echo "Success: MariaDB restore completed from '$RESTORE_DIR'."
-echo "MariaDB service has been restarted."
+echo "Success: Database '$DB_NAME' imported from '$SQL_FILE'."
