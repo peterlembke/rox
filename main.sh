@@ -622,6 +622,8 @@ test_unit_paratest()
 
   fi
 
+  local guestpathArray=()
+
   for subject in "${@:1:$nsubs}"
   do
     if [ ! -e "$subject" ]
@@ -633,9 +635,11 @@ test_unit_paratest()
     notice 'Testing '; success "$subject"; echo ' ..'
     local hostpath="$cwd/$subject"
     local guestpath="$ROX_BASE_DIR/${hostpath/$bd\//}"
-    container_exec appserver dockerhost \
-      php -f "$phpunit" -- -c "$config" "${@:$nsubs+1}" "$guestpath"
+    guestpathArray+=("$guestpath")
   done
+
+  container_exec appserver dockerhost \
+    ./var/www/rox/script/paratest-parameters "${@:$nsubs+1}" "${guestpathArray[@]}"
 }
 
 #############################################
