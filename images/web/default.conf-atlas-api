@@ -4,7 +4,7 @@ ServerName localhost
 
 <VirtualHost *:80>
 
-  ServerName dev.local
+  ServerName atlas-api.aktivbo.local
   DocumentRoot "/var/www/public"
 
   Timeout 600
