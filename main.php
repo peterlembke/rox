@@ -1353,6 +1353,7 @@ Usage:
     db local                Sets the env file for local database in docker
     db dev                  Sets the env file for dev database. Use VPN.
     db live                 Sets the env file for live database You get read only. Use VPN.
+    db unit                 Sets the env file for unit test database
   cache                     Open Redis CLI
     cache fpc               Open Page Cache Redis CLI
     cache session           Open Session Redis CLI
@@ -1451,6 +1452,10 @@ EOT;
 
             if ($subCommand === 'live') {
                 return $this->setEnv('.env.rox-live-db-with-passwords');
+            }
+
+            if ($subCommand === 'unit') {
+                return $this->setEnv('.env.rox-unit-db-with-passwords');
             }
 
             return $this->mysqlCmd($subArgs);
