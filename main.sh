@@ -43,7 +43,7 @@ export HOST_GID=1100
 #############################################
 # Workspace auto-detection for ai1/ai2/ai3 folders
 workspace_detect() {
-    local project_root="$COMPOSE_DIR/.."
+    local project_root="$(cd "$COMPOSE_DIR/.." && pwd)"
     local cwd="$(pwd)"
     local relative="${cwd#$project_root/}"
     local top_dir="${relative%%/*}"
