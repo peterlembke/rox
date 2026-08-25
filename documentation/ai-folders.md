@@ -4,53 +4,15 @@
 
 Run multiple Claude Code sessions simultaneously, each on a different branch/task. The Docker environment mounts the entire project root at `/var/www`, so folders placed inside the project are automatically visible to the containers.
 
-Three independent git clones (`ai1/`, `ai2/`, `ai3/`) inside the project root, each served by Apache on its own domain (`ai1.dev.local`, `ai2.dev.local`, `ai3.dev.local`). The rox command auto-detects which workspace you're in and adjusts paths accordingly.
+Three permanent folders (`ai1/`, `ai2/`, `ai3/`) inside the project root, each served by Apache on its own domain (`ai1.dev.local`, `ai2.dev.local`, `ai3.dev.local`). The rox command auto-detects which workspace you're in and adjusts paths accordingly.
 
-## Layout
+How the folders are created is up to each project — rox only provides the web server config and auto-detection.
 
-```
-atlas-api-83/                     <- main checkout, served as dev.local
-├── ai1/                          <- independent clone, served as ai1.dev.local
-│   ├── app/, config/, routes/... <- own code
-│   ├── vendor/                   <- own composer install
-│   ├── packages/                 <- own packages (from clone)
-│   ├── storage -> ../storage     <- symlink to shared storage
-│   └── .env                      <- own .env (APP_URL adjusted)
-├── ai2/                          <- same pattern
-├── ai3/                          <- same pattern
-└── rox/
-    ├── workspace.sh              <- NEW: workspace management functions
-    ├── main.sh                   <- MODIFIED: workspace command + auto-detection
-    └── docker-compose.yml        <- MODIFIED: volume mount for Apache conf
-```
+## Files to Modify
 
-## Files to Create
+### 1. `rox/images/web/default.conf`
 
-### 1. `rox/workspace.sh` — workspace management functions
-
-Sourced by `main.sh`. Key functions:
-
-**`workspace_detect`** — called early in `main.sh`, checks if `pwd` is inside an `ai1/`, `ai2/`, or `ai3/` folder. If so, sets `ROX_WORKSPACE_NAME` (e.g. `ai1`) and overrides `ROX_BASE_DIR` to `/var/www/ai1`. This makes all rox commands (`rox artisan`, `rox composer`, `rox unit`, etc.) automatically target the right workspace.
-
-**`workspace_add <name> [branch]`** — creates a workspace:
-1. Validate name is `ai1`, `ai2`, or `ai3`
-2. `git clone . <name>` from the project root (local clone, uses hardlinks for git objects — fast and space-efficient)
-3. `cd <name> && git remote set-url origin <actual-github-remote>` (so push goes to GitHub, not parent dir)
-4. If `branch` given: `git checkout <branch>` (or `git checkout -b <branch>`)
-5. Remove `storage/` and symlink: `rm -rf <name>/storage && ln -s ../storage <name>/storage`
-6. Copy `.env` to `<name>/.env`, adjust `APP_URL` to `http://<name>.dev.local`
-7. Run `composer install` inside the container: `container_exec appserver dockerhost composer install --working-dir=/var/www/<name> --no-interaction`
-8. Run `php artisan storage:link` in the workspace
-9. Regenerate Apache conf + reload
-10. Print the workspace URL
-
-**`workspace_remove <name>`** — removes a workspace:
-1. `rm -rf <name>/` from the project root
-2. Regenerate Apache conf + reload
-
-**`workspace_list`** — shows table with name, branch, domain for each existing ai* folder.
-
-**`workspace_generate_apache_conf`** — scans for `ai1/`, `ai2/`, `ai3/` directories, writes `workspaces-httpd.conf` with one VirtualHost per workspace:
+Add three VirtualHost blocks after the existing `dev.local` block. Apache silently ignores a VirtualHost whose DocumentRoot doesn't exist yet:
 
 ```apache
 <VirtualHost *:80>
@@ -68,77 +30,45 @@ Sourced by `main.sh`. Key functions:
     ErrorLog ${APACHE_LOG_DIR}/ai1-error.log
     CustomLog ${APACHE_LOG_DIR}/ai1-access.log combined
 </VirtualHost>
+
+<VirtualHost *:80>
+    ServerName ai2.dev.local
+    DocumentRoot "/var/www/ai2/public"
+    Timeout 600
+    <Directory "/var/www/ai2">
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+        DirectoryIndex index.php
+    </Directory>
+    ProxyPassMatch ^/(.*\.php(/.*)?)$ fcgi://appserver:9000/var/www/ai2/public/$1
+    SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+    ErrorLog ${APACHE_LOG_DIR}/ai2-error.log
+    CustomLog ${APACHE_LOG_DIR}/ai2-access.log combined
+</VirtualHost>
+
+<VirtualHost *:80>
+    ServerName ai3.dev.local
+    DocumentRoot "/var/www/ai3/public"
+    Timeout 600
+    <Directory "/var/www/ai3">
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+        DirectoryIndex index.php
+    </Directory>
+    ProxyPassMatch ^/(.*\.php(/.*)?)$ fcgi://appserver:9000/var/www/ai3/public/$1
+    SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+    ErrorLog ${APACHE_LOG_DIR}/ai3-error.log
+    CustomLog ${APACHE_LOG_DIR}/ai3-access.log combined
+</VirtualHost>
 ```
 
-All on port 80 — Apache routes by `Host` header (name-based virtual hosting).
+All on port 80 — Apache routes by `Host` header (name-based virtual hosting). No changes to `docker-compose.yml` needed since `default.conf` is already mounted.
 
-**`workspace_reload_apache`** — `compose_cmd exec webserver apachectl graceful`
+### 2. `rox/main.sh`
 
-### 2. `workspaces-httpd.conf` — generated Apache config at project root (not tracked)
-
-Initially empty, generated by `workspace_generate_apache_conf`.
-
-## Files to Modify
-
-### 3. `rox/docker-compose.yml`
-
-Add one volume mount to the webserver service to load the generated Apache conf:
-
-```yaml
-volumes:
-  - ..:/var/www
-  - ../workspaces-httpd.conf:/etc/apache2/sites-enabled/workspaces.conf
-```
-
-No port changes needed — all domains serve on port 80 via name-based virtual hosts. No appserver changes — FPM already serves any path under `/var/www/`.
-
-### 4. `rox/main.sh`
-
-**a) Source workspace.sh** — after config loading (after line 28):
-```bash
-source "$COMPOSE_DIR/workspace.sh"
-```
-
-**b) Auto-detect workspace** — right after sourcing, call `workspace_detect`. If inside an ai* folder, this overrides `ROX_BASE_DIR` so all existing commands (`rox artisan`, `rox composer`, `rox unit`, etc.) just work without any other changes.
-
-**c) Add workspace command** — before the catch-all `else` block (before line 1012):
-```bash
-elif [ "$1" = 'workspace' ] || [ "$1" = 'ws' ]
-then
-    shift
-    workspace_dispatch "$@"
-```
-
-Where `workspace_dispatch` handles subcommands: `add`, `remove`/`rm`, `list`/`ls`.
-
-**d) Bootstrap in start handler** — in the `start` block (after line 1016): touch `workspaces-httpd.conf` if missing, then regenerate from existing ai* folders.
-
-**e) Usage text** — add workspace commands to the help output.
-
-### 5. `.gitignore`
-
-Add:
-```
-/ai1
-/ai2
-/ai3
-/workspaces-httpd.conf
-```
-
-### 6. `/etc/hosts` (manual)
-
-Add these entries:
-```
-127.0.0.1   ai1.dev.local
-127.0.0.1   ai2.dev.local
-127.0.0.1   ai3.dev.local
-```
-
-The `rox workspace add` command will print a reminder if the hosts entry is missing.
-
-## How rox Auto-Detection Works
-
-When you `cd ai1/` and run any rox command, `workspace_detect` runs early:
+**a) Add workspace auto-detection** — after config loading (after line 28), add the detect function and call it:
 
 ```bash
 workspace_detect() {
@@ -152,9 +82,28 @@ workspace_detect() {
         ROX_BASE_DIR="/var/www/$top_dir"
     fi
 }
+workspace_detect
 ```
 
-This means `rox artisan migrate`, `rox unit`, `rox composer install` all automatically target the workspace you're in. No special flags needed.
+If inside an ai* folder, this overrides `ROX_BASE_DIR` so all existing commands (`rox artisan`, `rox composer`, `rox unit`, etc.) just work without any other changes.
+
+### 3. `.gitignore`
+
+Add:
+```
+/ai1
+/ai2
+/ai3
+```
+
+### 4. `/etc/hosts` (manual)
+
+Add these entries:
+```
+127.0.0.1   ai1.dev.local
+127.0.0.1   ai2.dev.local
+127.0.0.1   ai3.dev.local
+```
 
 ## Shared vs Independent
 
@@ -162,7 +111,7 @@ This means `rox artisan migrate`, `rox unit`, `rox composer install` all automat
 |---|---|---|
 | Git history | Independent | Separate clone |
 | Source code | Independent | Each clone has own files |
-| vendor/ | Independent | `composer install` per workspace (~30s with warm cache) |
+| vendor/ | Independent | `composer install` per workspace |
 | packages/ | Independent | Part of the clone |
 | .env | Independent | Copied with adjusted APP_URL |
 | storage/ | Shared | Symlink to main `../storage` |
@@ -170,40 +119,7 @@ This means `rox artisan migrate`, `rox unit`, `rox composer install` all automat
 | Cache (Dragonfly) | Shared | Same container |
 | MongoDB | Shared | Same container |
 
-## Usage
-
-```bash
-# Create a workspace (from project root or inside rox/)
-rox workspace add ai1
-rox workspace add ai2 feature-branch
-
-# List workspaces
-rox workspace list
-
-# Work inside a workspace — all rox commands auto-detect
-cd ai1
-rox artisan migrate
-rox unit packages/aktivbo/laravel_survey/src/Test/Unit/SomeTest.php
-rox composer install
-
-# Remove a workspace
-rox workspace remove ai1
-```
-
-## Verification
-
-1. `rox start` — main app on `http://dev.local` works as before
-2. `rox workspace add ai1` — clone created, composer installed
-3. Add `127.0.0.1 ai1.dev.local` to `/etc/hosts`
-4. Open `http://ai1.dev.local` — app loads
-5. `cd ai1 && rox artisan --version` — runs artisan from ai1's codebase
-6. `rox workspace add ai2 feature-branch` — second workspace on a different branch
-7. `rox workspace list` — shows both workspaces
-8. `rox workspace remove ai1` — cleanup works
-9. `rox stop` + `rox start` — surviving workspaces still work
-
 ## Notes
 
+- The three workspaces (ai1, ai2, ai3) are fixed. Apache config is committed and always present. A workspace folder that doesn't exist yet causes no errors.
 - Database migrations are shared across all workspaces. If two branches have conflicting migrations, adjust `DB_DATABASE` in the workspace's `.env` to use a separate database.
-- Each `composer install` takes ~30 seconds with a warm cache (no downloads, just symlinks and autoloader).
-- The `git clone .` command uses hardlinks for git objects on the same filesystem, so disk overhead is mostly the working tree files.

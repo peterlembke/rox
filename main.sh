@@ -41,6 +41,21 @@ export HOST_GID=1100
 # fi
 
 #############################################
+# Workspace auto-detection for ai1/ai2/ai3 folders
+workspace_detect() {
+    local project_root="$COMPOSE_DIR/.."
+    local cwd="$(pwd)"
+    local relative="${cwd#$project_root/}"
+    local top_dir="${relative%%/*}"
+
+    if [[ "$top_dir" =~ ^ai[1-3]$ ]] && [ -d "$project_root/$top_dir" ]; then
+        ROX_WORKSPACE_NAME="$top_dir"
+        ROX_BASE_DIR="/var/www/$top_dir"
+    fi
+}
+workspace_detect
+
+#############################################
 # Utility functions
 printc()
 {
