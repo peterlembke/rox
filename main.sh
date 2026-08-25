@@ -757,6 +757,9 @@ elif [ "$1" = 'db' ]
     elif [ "$1" = 'live' ]
     then
       set_env ".env.rox-live-db-with-passwords"
+    elif [ "$1" = 'unit' ]
+    then
+      set_env ".env.rox-unit-db-with-passwords"
     else
       mysql_cmd "$@"
     fi
@@ -942,6 +945,9 @@ elif [ "$1" = 'unit' ]
         # Turn ON xdebug. It is required
         container_exec appserver root phpenmod "xdebug"
         test_unit_coverage "$@"
+    else
+        shift
+        test_unit_laravel "$@"
     fi
 #############################################
 # Handle "analyse" action
@@ -976,6 +982,7 @@ Usage:
     db local                Sets the env file for local database in docker
     db dev                  Sets the env file for dev database. Use VPN.
     db live                 Sets the env file for live database You get read only. Use VPN.
+    db unit                 Sets the env file for unit test database in docker
   cache                     Open Redis CLI
     cache fpc               Open Page Cache Redis CLI
     cache session           Open Session Redis CLI

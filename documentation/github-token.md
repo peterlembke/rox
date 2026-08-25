@@ -1,9 +1,10 @@
-# Github token
+# GitHub token
 
 You need a github token to access all GitHub repos, both private and public. 
 
 ## Create a token
-Go to [Github tokens](https://github.com/settings/tokens) and register a new personal token.
+
+Go to [GitHub tokens](https://github.com/settings/tokens) and register a new personal token.
 You need to mark "repo". Set the expiration date. Set a title. Copy the token from the top of the page.
 
 Document your token.

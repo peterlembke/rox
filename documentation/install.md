@@ -62,8 +62,8 @@ git clone https://github.com/peterlembke/rox
 ```
 That will create the rox-folder and all files.
 
-## Create a Github token
-Go to [Github tokens](https://github.com/settings/tokens) and register a new personal token.
+## Create a GitHub token
+Go to [GitHub tokens](https://github.com/settings/tokens) and register a new personal token.
 You need to mark "repo". Set the expiration date. Set a title. Copy the token from the top of the page.
 
 Search in the rox-folder for ENV GITHUB_TOKEN and set your token here.
@@ -138,7 +138,7 @@ Now surf to https://localhost/
 
 ## Get Laravel working
 If you want to use Laravel you can do these steps:
-Make sure you did not skip the step "Create a Github token" and "Let PHP find the database".
+Make sure you did not skip the step "Create a GitHub token" and "Let PHP find the database".
 
 * Put your .env files in the project root.
 * Run `rox start` to start and enable things needed.

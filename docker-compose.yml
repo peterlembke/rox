@@ -8,6 +8,8 @@ services:
         - HOST_UID=${HOST_UID}
         - HOST_GID=${HOST_GID}
     image: ${PROJECT_NAME}-web
+    networks:
+      - default
     expose:
       - "80"
       - "443"
@@ -35,6 +37,8 @@ services:
         - PHP_VERSION=${PHP_VERSION}
         - GITHUB_TOKEN=${GITHUB_TOKEN}
     image: ${PROJECT_NAME}-app
+    networks:
+      - default
     environment:
       - XDEBUG_CONFIG
       - PHP_IDE_CONFIG
@@ -50,6 +54,7 @@ services:
     depends_on:
       - dbserver
       - cacheserver
+      - mongoserver
     extra_hosts:
       - "host1.local:172.17.0.1"
       - "host2.local:172.18.0.1"
@@ -59,6 +64,10 @@ services:
   dbserver:
     container_name: ${PROJECT_NAME}-db
     image: library/mariadb:latest
+    networks:
+      default:
+        aliases:
+          - dbserver
     environment:
       - MYSQL_ROOT_PASSWORD=${ROX_DB_PASS}
       - MYSQL_DATABASE=${ROX_DB_NAME}
@@ -77,6 +86,10 @@ services:
 #    image: library/redis:latest
     #    image: eqalpha/keydb:latest
     image: ghcr.io/dragonflydb/dragonfly:latest # https://github.com/dragonflydb/dragonfly/pkgs/container/dragonfly/versions
+    networks:
+      default:
+        aliases:
+          - cacheserver
     expose:
       - "6379"
     ports:
@@ -101,6 +114,10 @@ services:
     # image: mongo:8.0.3-noble
     image: mongo:8.2.6-noble
     # image: mongo:latest
+    networks:
+      default:
+        aliases:
+          - mongoserver
     restart: always
     expose:
       - "27017"
@@ -122,6 +139,8 @@ services:
 #      - FTP_PASS=123
 #      - FTP_USER=user
 #    image: garethflowers/ftp-server
+#    networks:
+#      - default
 #    ports:
 #      - "20-21:20-21/tcp"
 #      - "40000-40009:40000-40009/tcp" # For passive mode
@@ -136,3 +155,7 @@ services:
 #       - "--parallel"
 #       - "64"
 #       - "--no-prefill-assistant"
+
+networks:
+  default:
+    driver: bridge
