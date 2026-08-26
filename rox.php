@@ -15,6 +15,8 @@ while (!file_exists($cmd)) {
 
 $cmd = getcwd() . '/' . $cmd;
 
+chdir($cwd);
+
 // Execute main.php with all arguments
 require_once $cmd;
 
