@@ -56,6 +56,25 @@ workspace_detect() {
 workspace_detect
 
 #############################################
+# Ensure GraphQL schemas exist in workspace
+# When running from ai1/ai2/ai3, the stitched schemas
+# are in /var/www/graphql/ but the workspace base dir
+# points to /var/www/aiX/ where they don't exist.
+workspace_ensure_graphql_schemas() {
+    if [ -z "${ROX_WORKSPACE_NAME:-}" ]; then
+        return
+    fi
+
+    local project_root="$(cd "$COMPOSE_DIR/.." && pwd)"
+    local workspace_graphql="$project_root/$ROX_WORKSPACE_NAME/graphql"
+
+    if [ ! -d "$workspace_graphql" ]; then
+        notice "Stitching GraphQL schemas for workspace $ROX_WORKSPACE_NAME"; echo
+        laravel_cmd graphql:stitch:all
+    fi
+}
+
+#############################################
 # Utility functions
 printc()
 {
@@ -514,6 +533,8 @@ purge_all_laravel()
 # Run PHPUnit test in app container
 test_unit_laravel()
 {
+  workspace_ensure_graphql_schemas
+
   local subjects
   local nsubs=0
   local bd="$(cd "$COMPOSE_DIR"/.. && pwd)"
@@ -613,6 +634,8 @@ test_unit_plain()
 # Run PHPUnit test in app container
 test_unit_paratest()
 {
+  workspace_ensure_graphql_schemas
+
   local subjects
   local nsubs=0
   local bd="$(cd "$COMPOSE_DIR"/.. && pwd)"
@@ -673,6 +696,8 @@ test_unit_paratest()
 # Observe that xdebug must be enabled for the code coverage to work.
 test_unit_coverage()
 {
+  workspace_ensure_graphql_schemas
+
   local subjects
   local nsubs=0
   local bd="$(cd "$COMPOSE_DIR"/.. && pwd)"
