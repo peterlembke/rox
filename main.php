@@ -21,6 +21,7 @@ class Main
     protected string $hostUid = "1100";
     protected string $hostGid = "1100";
     protected string $roxBaseDir = "/var/www/rox";
+    protected string $roxWorkspaceName = "";
     protected string $roxDbUser = "root";
     protected string $roxDbPass = "";
     protected string $roxDbName = "rox";
@@ -62,7 +63,7 @@ class Main
         $this->isOtherOS = $this->isLinux === false && $this->isMacOS === false;
 
         $this->loadConfigFiles();
-
+        $this->detectWorkspace();
         $this->setEnvironmentVariables();
     }
 
@@ -90,6 +91,31 @@ class Main
         return [
             'answer' => true,
             'message' => 'Configuration files loaded successfully'
+        ];
+    }
+
+    /**
+     * Detect ai1/ai2/ai3 workspace from cwd and override roxBaseDir
+     */
+    protected function detectWorkspace(): array
+    {
+        $projectRoot = dirname($this->composeDir);
+        $cwd = getcwd();
+        $relative = str_replace($projectRoot . '/', '', $cwd);
+        $parts = explode('/', $relative);
+        $topDir = $parts[0] ?? '';
+
+        $isWorkspace = preg_match('/^ai[1-3]$/', $topDir) === 1
+            && is_dir($projectRoot . '/' . $topDir) === true;
+
+        if ($isWorkspace === true) {
+            $this->roxWorkspaceName = $topDir;
+            $this->roxBaseDir = "/var/www/{$topDir}";
+        }
+
+        return [
+            'answer' => true,
+            'message' => 'Workspace detection completed'
         ];
     }
 
@@ -1129,6 +1155,9 @@ class Main
         $subjects = [];
         $nsubs = 0;
         $bd = dirname($this->composeDir);
+        if ($this->roxWorkspaceName !== '') {
+            $bd .= '/' . $this->roxWorkspaceName;
+        }
         $cwd = getcwd();
         $phpunit = "{$this->roxBaseDir}/vendor/phpunit/phpunit/phpunit";
         $config = 'phpunit.xml';
@@ -1191,6 +1220,9 @@ class Main
         $subjects = [];
         $nsubs = 0;
         $bd = dirname($this->composeDir);
+        if ($this->roxWorkspaceName !== '') {
+            $bd .= '/' . $this->roxWorkspaceName;
+        }
         $cwd = getcwd();
         $phpunit = "{$this->roxBaseDir}/vendor/bin/paratest";
         $config = 'phpunit.xml';
@@ -1253,6 +1285,9 @@ class Main
         $subjects = [];
         $nsubs = 0;
         $bd = dirname($this->composeDir);
+        if ($this->roxWorkspaceName !== '') {
+            $bd .= '/' . $this->roxWorkspaceName;
+        }
         $cwd = getcwd();
         $phpunit = "{$this->roxBaseDir}/vendor/phpunit/phpunit/phpunit";
         $config = 'phpunit.xml';

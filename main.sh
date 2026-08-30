@@ -41,6 +41,21 @@ export HOST_GID=1100
 # fi
 
 #############################################
+# Workspace auto-detection for ai1/ai2/ai3 folders
+workspace_detect() {
+    local project_root="$(cd "$COMPOSE_DIR/.." && pwd)"
+    local cwd="$(pwd)"
+    local relative="${cwd#$project_root/}"
+    local top_dir="${relative%%/*}"
+
+    if [[ "$top_dir" =~ ^ai[1-3]$ ]] && [ -d "$project_root/$top_dir" ]; then
+        ROX_WORKSPACE_NAME="$top_dir"
+        ROX_BASE_DIR="/var/www/$top_dir"
+    fi
+}
+workspace_detect
+
+#############################################
 # Utility functions
 printc()
 {
@@ -502,6 +517,9 @@ test_unit_laravel()
   local subjects
   local nsubs=0
   local bd="$(cd "$COMPOSE_DIR"/.. && pwd)"
+  if [ -n "${ROX_WORKSPACE_NAME:-}" ]; then
+    bd="$bd/$ROX_WORKSPACE_NAME"
+  fi
   local cwd="$(pwd)"
   local phpunit="$ROX_BASE_DIR"'/vendor/phpunit/phpunit/phpunit'
   local config='phpunit.xml'
@@ -551,6 +569,9 @@ test_unit_plain()
   local subjects
   local nsubs=0
   local bd="$(cd "$COMPOSE_DIR"/.. && pwd)"
+  if [ -n "${ROX_WORKSPACE_NAME:-}" ]; then
+    bd="$bd/$ROX_WORKSPACE_NAME"
+  fi
   local cwd="$(pwd)"
   local phpunit='vendor/phpunit/phpunit/phpunit'
   local config='phpunit.xml'
@@ -595,6 +616,9 @@ test_unit_paratest()
   local subjects
   local nsubs=0
   local bd="$(cd "$COMPOSE_DIR"/.. && pwd)"
+  if [ -n "${ROX_WORKSPACE_NAME:-}" ]; then
+    bd="$bd/$ROX_WORKSPACE_NAME"
+  fi
   local cwd="$(pwd)"
   local phpunit="$ROX_BASE_DIR"'/vendor/bin/paratest'
   local config='phpunit.xml'
@@ -652,6 +676,9 @@ test_unit_coverage()
   local subjects
   local nsubs=0
   local bd="$(cd "$COMPOSE_DIR"/.. && pwd)"
+  if [ -n "${ROX_WORKSPACE_NAME:-}" ]; then
+    bd="$bd/$ROX_WORKSPACE_NAME"
+  fi
   local cwd="$(pwd)"
   local phpunit="$ROX_BASE_DIR"'/vendor/phpunit/phpunit/phpunit'
   local config='phpunit.xml'
