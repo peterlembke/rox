@@ -113,6 +113,9 @@ services:
     container_name: ${PROJECT_NAME}-mongo
     # image: mongo:8.0.3-noble
     image: mongo:8.2.6-noble
+    # macOS/VirtioFS: run as the mongodb uid so the entrypoint skips its root-only
+    # chown+gosu branch, which fails with EPERM on the bind-mounted /data/db
+    user: "999:999"
     # image: mongo:latest
     networks:
       default:
