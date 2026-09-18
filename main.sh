@@ -167,6 +167,23 @@ container_exec()
   fi
 }
 
+################################################################################
+# Execute command in container, from a given working directory.
+# Needed by tools that resolve relative paths from the current directory, such as
+# the bootstrap in phpunit.xml. Pass "$ROX_BASE_DIR" to stay inside the workspace.
+container_exec_workdir()
+{
+  local container="$1"; shift
+  local user="$1"; shift
+  local workdir="$1"; shift
+  if [ -t 0 ]
+  then
+    compose_cmd exec --user "$user" --workdir "$workdir" "$container" "$@"
+  else
+    docker exec -i --user "$user" --workdir "$workdir" "$(compose_cmd ps -q "$container")" "$@"
+  fi
+}
+
 #############################################
 # Run Laravel CLI command
 laravel_cmd()
@@ -621,6 +638,7 @@ test_unit_paratest()
   fi
   local cwd="$(pwd)"
   local phpunit="$ROX_BASE_DIR"'/vendor/bin/paratest'
+  local processes="${ROX_PARATEST_PROCESSES:-8}"
   local config='phpunit.xml'
   # [ -f "$bd/$config" ] || config="$config"'.dist'
   config="$ROX_BASE_DIR"'/'"$config"
@@ -636,12 +654,12 @@ test_unit_paratest()
   then
     # No test subjects given - run full suite
 
-    container_exec appserver dockerhost \
-      ./var/www/rox/script/paratest
+    container_exec_workdir appserver dockerhost "$ROX_BASE_DIR" \
+      php -f "$phpunit" -- -c "$config" \
+        --runner WrapperRunner --processes "$processes" --display-skipped "${@:$nsubs+1}"
     return
 
-    # php -f "$phpunit" -- -c "$config" --runner WrapperRunner --processes 6 "${@:$nsubs+1}"
-    # php -f "$phpunit" -- -c "$config" --runner WrapperRunner --processes 6 --log-junit /var/www/report.xml "${@:$nsubs+1}"
+    # Add --log-junit "$ROX_BASE_DIR"/report.xml to get a report file
     # Copy paste report.xml to https://marmelab.com/phpunit-d3-report/
 
   fi
@@ -662,8 +680,10 @@ test_unit_paratest()
     guestpathArray+=("$guestpath")
   done
 
-  container_exec appserver dockerhost \
-    ./var/www/rox/script/paratest-parameters "${@:$nsubs+1}" "${guestpathArray[@]}"
+  container_exec_workdir appserver dockerhost "$ROX_BASE_DIR" \
+    php -f "$phpunit" -- -c "$config" \
+      --runner WrapperRunner --processes "$processes" --display-skipped \
+      "${@:$nsubs+1}" "${guestpathArray[@]}"
 }
 
 #############################################
