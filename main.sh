@@ -6,7 +6,7 @@ COMPOSE_BIN="$DOCKER_BIN"
 COMPOSE_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # Debug: print the absolute path to this main.sh (to stderr)
-echo "rox main.sh path: $COMPOSE_DIR/main.sh" 1>&2
+# echo "rox main.sh path: $COMPOSE_DIR/main.sh" 1>&2
 
 # Load base defaults shared by all platforms
 source "$COMPOSE_DIR/default.conf"
