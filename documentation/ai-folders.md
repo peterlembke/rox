@@ -8,6 +8,15 @@ Three permanent folders (`ai1/`, `ai2/`, `ai3/`) inside the project root, each s
 
 How the folders are created is up to each project — rox only provides the web server config and auto-detection.
 
+## Web addresses (ai1–ai6)
+
+`images/web/default.conf` has one VirtualHost per folder, `ai1` to `ai6`. Each answers on two names, for example:
+
+- `http://ai1.dev.local/`
+- `http://ai1.aktivbo-api.aktivbo.dev.local/ai-playground`
+
+Both names need an `/etc/hosts` line pointing to `127.0.0.1`. The config is copied into the web image at build time, so rebuild and restart the web container after changing it.
+
 ## Files to Modify
 
 ### 1. `rox/images/web/default.conf`
