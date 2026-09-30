@@ -95,7 +95,7 @@ class Main
     }
 
     /**
-     * Detect ai1/ai2/ai3 workspace from cwd and override roxBaseDir
+     * Detect ai1-ai6 workspace from cwd and override roxBaseDir
      */
     protected function detectWorkspace(): array
     {
@@ -105,7 +105,7 @@ class Main
         $parts = explode('/', $relative);
         $topDir = $parts[0] ?? '';
 
-        $isWorkspace = preg_match('/^ai[1-3]$/', $topDir) === 1
+        $isWorkspace = preg_match('/^ai[1-6]$/', $topDir) === 1
             && is_dir($projectRoot . '/' . $topDir) === true;
 
         if ($isWorkspace === true) {
