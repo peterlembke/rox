@@ -463,20 +463,23 @@ purge_all_independent()
 # Clean all known cache layers for laravel
 purge_all_laravel()
 {
-  notice 'Flushing Redis Cache'; echo -n ' .. '
-  e="$(redis_cmd FLUSHDB)"
+  # Redis flush and cache:clear are commented out: all seven folders share one
+  # Redis (cacheserver) with an empty CACHE_PREFIX, so a flush from one folder's
+  # QA clears the cache for every other folder.
+  # notice 'Flushing Redis Cache'; echo -n ' .. '
+  # e="$(redis_cmd FLUSHDB)"
   # `redis-cli' returns 0 on error, look for output `OK' instead
-  [ "$e" = "OK"$'\r' ] && success '[DONE]' && echo || {
-    error '[ERROR]'; echo
-    echo "$e"
-  }
+  # [ "$e" = "OK"$'\r' ] && success '[DONE]' && echo || {
+  #   error '[ERROR]'; echo
+  #   echo "$e"
+  # }
   # https://codescompanion.com/how-to-clear-cache-in-laravel-5/
-  notice 'Clearing Laravel Application Cache'; echo -n ' .. '
+  # notice 'Clearing Laravel Application Cache'; echo -n ' .. '
   # `laravel_cmd' returns 129 on exit if stdin is a tty, hence `echo |'
-  e="$(echo | laravel_cmd cache:clear 2>&1)" && success '[DONE]' && echo || {
-    error '[ERROR]'; echo
-    echo "$e"
-  }
+  # e="$(echo | laravel_cmd cache:clear 2>&1)" && success '[DONE]' && echo || {
+  #   error '[ERROR]'; echo
+  #   echo "$e"
+  # }
   notice 'Clearing Laravel Route Cache'; echo -n ' .. '
   # `laravel_cmd' returns 129 on exit if stdin is a tty, hence `echo |'
   e="$(echo | laravel_cmd route:cache 2>&1)" && success '[DONE]' && echo || {
