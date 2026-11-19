@@ -807,7 +807,7 @@ elif [ "$1" = 'db' ]
     elif [ "$1" = 'live' ]
     then
       set_env ".env.rox-live-db-with-passwords"
-    elif [ "$1" = 'unit' ]
+    elif [ "$1" = 'unit' ] || [ "$1" = 'test' ]
     then
       set_env ".env.rox-unit-db-with-passwords"
     else

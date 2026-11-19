@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+The app image trusts `/var/www` in the system git config (`/etc/gitconfig`) for every user.
+On Mac (VirtioFS) the mount point shows as root-owned to other users, so `rox composer`
+(run as dockerhost) failed on path repositories with "detected dubious ownership".
+
 ## [1.4.0] - 2024-12-01
 [GitHub](https://github.com/peterlembke/rox/releases/tag/v1.4.0)
 

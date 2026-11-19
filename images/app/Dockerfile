@@ -118,6 +118,10 @@ COPY exim4.debconf /tmp/
 RUN debconf-set-selections /tmp/exim4.debconf
 RUN dpkg-reconfigure -f noninteractive exim4-config
 
+# /var/www is a bind mount that shows as root-owned to other users (VirtioFS on Mac).
+# Trust it for every user, or git (and composer as dockerhost) refuses "dubious ownership".
+RUN git config --system --add safe.directory /var/www
+
 # Clean up
 RUN apt clean && rm -rf /var/lib/apt/lists/*
 
