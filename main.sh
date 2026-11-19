@@ -995,6 +995,11 @@ elif [ "$1" = 'unit' ]
         # Turn ON xdebug. It is required
         container_exec appserver root phpenmod "xdebug"
         test_unit_coverage "$@"
+        coverage_exit_code=$?
+        # And off again, so it does not stay on for every folder that shares the container.
+        container_exec appserver root phpdismod "xdebug"
+        fpm_cmd reload
+        exit "$coverage_exit_code"
     else
         shift
         test_unit_laravel "$@"
@@ -1068,8 +1073,10 @@ else
     update_hosts_file "$@"
     notice 'Enabling opcache'; echo
     container_exec appserver root phpenmod "opcache"
-    notice 'Enabling xdebug'; echo
-    container_exec appserver root phpenmod "xdebug"
+    # Xdebug stays off: every folder shares this container, and with xdebug.mode=debug
+    # every PHP run waits for PhpStorm. Turn it on by hand with rox xdebug on (or xon).
+    notice 'Disabling xdebug (rox xdebug on to debug)'; echo
+    container_exec appserver root phpdismod "xdebug"
     notice 'Enabling gnupg'; echo
     container_exec appserver root phpenmod "gnupg"
     notice 'Enabling mongodb'; echo
