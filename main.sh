@@ -185,6 +185,26 @@ container_exec_workdir()
 }
 
 #############################################
+# After a MongoDB import: recreate the indexes the Laravel index migrations define for that database (AT-13147).
+# The dump brings the indexes of the server it came from, and the migrations never run again, so for example the
+# respondent cache lost its CustomerID index. Only for a Laravel project; the database is the import folder's name.
+mongodb_restore_indexes()
+{
+  local databaseName="$1"
+  # The folder above rox is /var/www in the containers: /var/www is the root checkout, /var/www/ai1 its ai1 folder
+  local projectFolderOnHost="$COMPOSE_DIR/..${ROX_BASE_DIR#/var/www}"
+  if [ ! -f "$projectFolderOnHost/artisan" ]
+  then
+    notice "Not a Laravel project, so no MongoDB indexes to recreate"; echo
+    return 0
+  fi
+
+  notice "Recreating the MongoDB indexes of $databaseName from the index migrations"; echo
+  container_exec appserver dockerhost \
+    php "/var/www/$(basename "$COMPOSE_DIR")/script/mongodb-restore-indexes.php" "$ROX_BASE_DIR" "$databaseName"
+}
+
+#############################################
 # Run Laravel CLI command
 laravel_cmd()
 {
@@ -941,6 +961,12 @@ elif [ "$1" = 'import' ]
       notice "Copying mongodb-import.sh to data/mongodb/dumpdir"; echo
       cp "$COMPOSE_DIR/script/mongodb-import.sh" "$COMPOSE_DIR/data/mongodb/dumpdir/"
       container_exec mongoserver root bash -c "cd /data/dumpdir/ && ./mongodb-import.sh $databaseDir $forceFlag"
+      importExitCode=$?
+      if [ "$importExitCode" -ne 0 ]
+      then
+        exit "$importExitCode"
+      fi
+      mongodb_restore_indexes "$(basename "$databaseDir")"
     elif [ "$1" = 'mariadb' ]
     then
       shift
@@ -1052,7 +1078,7 @@ Usage:
   container                 Container commands
     ip {app/web/cache/db}   Get IP for a container
     url                     Set web server URL in app HOSTS file
-  import mongodb {dir} [--force]      Run mongodb-import.sh in mongoserver container
+  import mongodb {dir} [--force]      Run mongodb-import.sh in mongoserver container, then recreate the indexes from the index migrations
   import mariadb {file}.sql [--force]  Run mariadb-import.sh in dbserver container
   unit <path> <options>     Run PHPUnit tests
   unit {laravel|paratest|coverage}  Run PHPUnit tests

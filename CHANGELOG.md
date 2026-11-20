@@ -11,6 +11,10 @@ The app image trusts `/var/www` in the system git config (`/etc/gitconfig`) for 
 On Mac (VirtioFS) the mount point shows as root-owned to other users, so `rox composer`
 (run as dockerhost) failed on path repositories with "detected dubious ownership".
 
+`rox import mongodb {dir}` recreates the database's MongoDB indexes after the import, from the Laravel index
+migrations (`script/mongodb-restore-indexes.php`). The dump brings the indexes of the server it came from, and the
+migrations never run again, so the respondent cache had lost its `CustomerID` index (AT-13147).
+
 ## [1.4.0] - 2024-12-01
 [GitHub](https://github.com/peterlembke/rox/releases/tag/v1.4.0)
 
